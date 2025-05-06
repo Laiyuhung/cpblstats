@@ -6,7 +6,7 @@ export default function WaiverPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/waiver')
+    fetch('/api/home')
       .then(res => res.json())
       .then(res => {
         if (res.error) {
