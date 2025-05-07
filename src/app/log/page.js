@@ -24,6 +24,7 @@ export default function SetupLineup() {
   useEffect(() => {
     const game = games.find(g => g.game_no === selectedGame)
     if (game) {
+      console.log('🎯 選擇比賽:', game)
       setHomeTeam(game.home)
       setAwayTeam(game.away)
     }
@@ -55,6 +56,12 @@ export default function SetupLineup() {
       alert('請至少輸入一方完整的打序與投手')
       return
     }
+
+    console.log('📨 傳送資料:', {
+      game_id: selectedGame,
+      batting_orders,
+      starting_pitchers
+    })
 
     const res = await fetch('/api/setup-lineup', {
       method: 'POST',
