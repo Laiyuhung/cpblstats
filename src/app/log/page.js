@@ -9,6 +9,8 @@ export default function SetupLineup() {
   const [awayBatters, setAwayBatters] = useState(Array(9).fill({ name: '', position: '' }))
   const [homePitcher, setHomePitcher] = useState('')
   const [awayPitcher, setAwayPitcher] = useState('')
+  const [homeTeam, setHomeTeam] = useState('')
+  const [awayTeam, setAwayTeam] = useState('')
 
   useEffect(() => {
     fetch('/api/games')
@@ -18,6 +20,14 @@ export default function SetupLineup() {
         setGames(data)
       })
   }, [])
+
+  useEffect(() => {
+    const game = games.find(g => g.game_no === selectedGame)
+    if (game) {
+      setHomeTeam(game.home)
+      setAwayTeam(game.away)
+    }
+  }, [selectedGame, games])
 
   const handleSubmit = async () => {
     if (!selectedGame) {
@@ -29,17 +39,17 @@ export default function SetupLineup() {
     if (awayBatters.some(b => b.name && b.position)) {
       batting_orders.push(...awayBatters
         .filter(b => b.name && b.position)
-        .map((b, i) => ({ team: 'away', batter_order: i + 1, batter_name: b.name, position: b.position })))
+        .map((b, i) => ({ team: awayTeam, batter_order: i + 1, batter_name: b.name, position: b.position })))
     }
     if (homeBatters.some(b => b.name && b.position)) {
       batting_orders.push(...homeBatters
         .filter(b => b.name && b.position)
-        .map((b, i) => ({ team: 'home', batter_order: i + 1, batter_name: b.name, position: b.position })))
+        .map((b, i) => ({ team: homeTeam, batter_order: i + 1, batter_name: b.name, position: b.position })))
     }
 
     const starting_pitchers = []
-    if (awayPitcher) starting_pitchers.push({ team: 'away', pitcher_name: awayPitcher })
-    if (homePitcher) starting_pitchers.push({ team: 'home', pitcher_name: homePitcher })
+    if (awayPitcher) starting_pitchers.push({ team: awayTeam, pitcher_name: awayPitcher })
+    if (homePitcher) starting_pitchers.push({ team: homeTeam, pitcher_name: homePitcher })
 
     if (batting_orders.length === 0 || starting_pitchers.length === 0) {
       alert('請至少輸入一方完整的打序與投手')
@@ -72,7 +82,7 @@ export default function SetupLineup() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h2 className="font-semibold">客隊打序</h2>
+          <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
           {awayBatters.map((batter, idx) => (
             <div key={idx} className="flex gap-2 mb-1">
               <input
@@ -101,7 +111,7 @@ export default function SetupLineup() {
         </div>
 
         <div>
-          <h2 className="font-semibold">主隊打序</h2>
+          <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
           {homeBatters.map((batter, idx) => (
             <div key={idx} className="flex gap-2 mb-1">
               <input
