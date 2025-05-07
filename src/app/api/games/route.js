@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from('cpbl_schedule')
-      .select('game_no, date, home_team, away_team')
+      .select('game_no, date, home, away')
       .order('date', { ascending: true })
 
     if (error) {
