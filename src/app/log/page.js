@@ -1,100 +1,127 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-export default function BaseballLogger() {
-  const [battingOrder, setBattingOrder] = useState(Array(9).fill(''))
-  const [pitcher, setPitcher] = useState('')
-  const [isLineupLocked, setIsLineupLocked] = useState(false)
-  const [atBats, setAtBats] = useState([])
-  const [currentBatterIndex, setCurrentBatterIndex] = useState(0)
-  const [result, setResult] = useState('')
+export default function SetupLineup() {
+  const [games, setGames] = useState([])
+  const [selectedGame, setSelectedGame] = useState('')
+  const [homeBatters, setHomeBatters] = useState(Array(9).fill({ name: '', position: '' }))
+  const [awayBatters, setAwayBatters] = useState(Array(9).fill({ name: '', position: '' }))
+  const [homePitcher, setHomePitcher] = useState('')
+  const [awayPitcher, setAwayPitcher] = useState('')
 
-  const handleLockLineup = () => {
-    if (battingOrder.some(name => name.trim() === '') || pitcher.trim() === '') {
-      alert('請輸入完整的先發打序與投手')
+  useEffect(() => {
+    fetch('/api/games')
+      .then(res => res.json())
+      .then(data => setGames(data))
+  }, [])
+
+  const handleSubmit = async () => {
+    if (
+      !selectedGame ||
+      homeBatters.some(b => !b.name || !b.position) ||
+      awayBatters.some(b => !b.name || !b.position) ||
+      !homePitcher || !awayPitcher
+    ) {
+      alert('請輸入完整資料')
       return
     }
-    setIsLineupLocked(true)
-  }
 
-  const handleRecordAtBat = () => {
-    if (!result) return
+    const batting_orders = [
+      ...homeBatters.map((b, i) => ({ team: 'home', batter_order: i + 1, batter_name: b.name, position: b.position })),
+      ...awayBatters.map((b, i) => ({ team: 'away', batter_order: i + 1, batter_name: b.name, position: b.position }))
+    ]
 
-    const batter = battingOrder[currentBatterIndex]
-    const newEntry = {
-      batter,
-      result,
-      pitcher,
-      atBatNumber: atBats.length + 1,
-    }
+    const starting_pitchers = [
+      { team: 'home', pitcher_name: homePitcher },
+      { team: 'away', pitcher_name: awayPitcher }
+    ]
 
-    setAtBats([...atBats, newEntry])
-    setCurrentBatterIndex((currentBatterIndex + 1) % battingOrder.length)
-    setResult('')
+    const res = await fetch('/api/setup-game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: selectedGame, batting_orders, starting_pitchers })
+    })
+
+    const result = await res.json()
+    alert(result.message || '完成')
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">棒球逐打席紀錄</h1>
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">賽前登錄先發名單</h1>
 
-      {!isLineupLocked && (
+      <label className="block font-semibold mb-2">選擇比賽</label>
+      <select className="border p-2 w-full mb-4" value={selectedGame} onChange={e => setSelectedGame(e.target.value)}>
+        <option value="">-- 請選擇 --</option>
+        {games.map(game => (
+          <option key={game.game_no} value={game.game_no}>
+            {game.date} - {game.away_team} @ {game.home_team}
+          </option>
+        ))}
+      </select>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <h2 className="font-semibold">先發打序</h2>
-          {battingOrder.map((name, idx) => (
-            <input
-              key={idx}
-              type="text"
-              className="border p-1 my-1 w-full"
-              placeholder={`第 ${idx + 1} 棒`}
-              value={name}
-              onChange={(e) => {
-                const copy = [...battingOrder]
-                copy[idx] = e.target.value
-                setBattingOrder(copy)
-              }}
-            />
+          <h2 className="font-semibold">主隊打序</h2>
+          {homeBatters.map((batter, idx) => (
+            <div key={idx} className="flex gap-2 mb-1">
+              <input
+                className="border p-1 w-1/2"
+                placeholder={`第 ${idx + 1} 棒選手`}
+                value={batter.name}
+                onChange={e => {
+                  const copy = [...homeBatters]
+                  copy[idx] = { ...copy[idx], name: e.target.value }
+                  setHomeBatters(copy)
+                }}
+              />
+              <input
+                className="border p-1 w-1/2"
+                placeholder="守位"
+                value={batter.position}
+                onChange={e => {
+                  const copy = [...homeBatters]
+                  copy[idx] = { ...copy[idx], position: e.target.value }
+                  setHomeBatters(copy)
+                }}
+              />
+            </div>
           ))}
-
-          <h2 className="font-semibold mt-4">投手</h2>
-          <input
-            type="text"
-            className="border p-1 w-full"
-            value={pitcher}
-            onChange={(e) => setPitcher(e.target.value)}
-            placeholder="投手名稱"
-          />
-
-          <button className="bg-blue-500 text-white px-4 py-2 mt-4 rounded" onClick={handleLockLineup}>
-            確認打序與投手
-          </button>
+          <input value={homePitcher} onChange={e => setHomePitcher(e.target.value)} className="border p-1 w-full mt-2" placeholder="主隊先發投手" />
         </div>
-      )}
 
-      {isLineupLocked && (
         <div>
-          <h2 className="mt-4 font-semibold">目前打者：{battingOrder[currentBatterIndex]}</h2>
-          <input
-            type="text"
-            className="border p-1 w-full mt-2"
-            value={result}
-            onChange={(e) => setResult(e.target.value)}
-            placeholder="打席結果（如：安打、三振、四壞）"
-          />
-          <button className="bg-green-600 text-white px-4 py-2 mt-2 rounded" onClick={handleRecordAtBat}>
-            紀錄打席
-          </button>
-
-          <h3 className="mt-6 font-bold">紀錄結果：</h3>
-          <ul className="list-disc pl-6">
-            {atBats.map((entry, idx) => (
-              <li key={idx}>
-                第 {entry.atBatNumber} 打席 - {entry.batter} 對 {entry.pitcher}：{entry.result}
-              </li>
-            ))}
-          </ul>
+          <h2 className="font-semibold">客隊打序</h2>
+          {awayBatters.map((batter, idx) => (
+            <div key={idx} className="flex gap-2 mb-1">
+              <input
+                className="border p-1 w-1/2"
+                placeholder={`第 ${idx + 1} 棒選手`}
+                value={batter.name}
+                onChange={e => {
+                  const copy = [...awayBatters]
+                  copy[idx] = { ...copy[idx], name: e.target.value }
+                  setAwayBatters(copy)
+                }}
+              />
+              <input
+                className="border p-1 w-1/2"
+                placeholder="守位"
+                value={batter.position}
+                onChange={e => {
+                  const copy = [...awayBatters]
+                  copy[idx] = { ...copy[idx], position: e.target.value }
+                  setAwayBatters(copy)
+                }}
+              />
+            </div>
+          ))}
+          <input value={awayPitcher} onChange={e => setAwayPitcher(e.target.value)} className="border p-1 w-full mt-2" placeholder="客隊先發投手" />
         </div>
-      )}
+      </div>
+
+      <button className="bg-blue-600 text-white px-4 py-2 rounded mt-4" onClick={handleSubmit}>提交</button>
     </div>
   )
 }
