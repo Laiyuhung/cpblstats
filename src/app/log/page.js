@@ -13,7 +13,10 @@ export default function SetupLineup() {
   useEffect(() => {
     fetch('/api/games')
       .then(res => res.json())
-      .then(data => setGames(data))
+      .then(data => {
+        console.log('📦 賽程資料:', data)  // 👈 加這行
+        setGames(data)
+      })
   }, [])
 
   const handleSubmit = async () => {
@@ -56,7 +59,7 @@ export default function SetupLineup() {
         <option value="">-- 請選擇 --</option>
         {games.map(game => (
           <option key={game.game_no} value={game.game_no}>
-            {game.date} - {game.away_team} @ {game.home_team}
+            {game.date} - {game.away} @ {game.home}
           </option>
         ))}
       </select>
