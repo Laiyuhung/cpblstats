@@ -22,7 +22,8 @@ export default function SetupLineup() {
   }, [])
 
   useEffect(() => {
-    const game = games.find(g => g.game_no === selectedGame)
+    const game = games.find(g => g.game_no === Number(selectedGame))
+
     if (game) {
       console.log('🎯 選擇比賽:', game)
       setHomeTeam(game.home)
