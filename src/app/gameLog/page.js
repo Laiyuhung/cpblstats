@@ -24,24 +24,44 @@ export default function SetupLineup() {
   }, [])
 
   useEffect(() => {
-    const game = games.find(g => g.game_no === Number(selectedGame))
+    const game = games.find(g => g.game_no === Number(selectedGame));
 
     if (game) {
-      console.log('🎯 選擇比賽:', game)
-      setHomeTeam(game.home)
-      setAwayTeam(game.away)
+      console.log('🎯 選擇比賽:', game);
+      setHomeTeam(game.home);
+      setAwayTeam(game.away);
 
       // Fetch lineup status for the selected game
       fetch(`/api/check-lineup?game_id=${game.game_no}`)
         .then(res => res.json())
         .then(data => {
-          console.log('📝 登錄狀態:', data)
-          const homeRegistered = data.battingOrders.some(order => order.team === game.home)
-          const awayRegistered = data.battingOrders.some(order => order.team === game.away)
-          setRegisteredTeams({ home: homeRegistered, away: awayRegistered })
-        })
+          console.log('📝 登錄狀態:', data);
+          const homeRegistered = data.battingOrders.some(order => order.team === game.home);
+          const awayRegistered = data.battingOrders.some(order => order.team === game.away);
+          setRegisteredTeams({ home: homeRegistered, away: awayRegistered });
+
+          // Populate batters and pitchers if data exists
+          const homeBattersData = data.battingOrders
+            .filter(order => order.team === game.home)
+            .sort((a, b) => a.batter_order - b.batter_order)
+            .map(order => ({ name: order.batter_name, position: order.position }));
+
+          const awayBattersData = data.battingOrders
+            .filter(order => order.team === game.away)
+            .sort((a, b) => a.batter_order - b.batter_order)
+            .map(order => ({ name: order.batter_name, position: order.position }));
+
+          setHomeBatters(homeBattersData.length ? homeBattersData : Array(9).fill({ name: '', position: '' }));
+          setAwayBatters(awayBattersData.length ? awayBattersData : Array(9).fill({ name: '', position: '' }));
+
+          const homePitcherData = data.startingPitchers.find(p => p.team === game.home);
+          const awayPitcherData = data.startingPitchers.find(p => p.team === game.away);
+
+          setHomePitcher(homePitcherData ? homePitcherData.pitcher_name : '');
+          setAwayPitcher(awayPitcherData ? awayPitcherData.pitcher_name : '');
+        });
     }
-  }, [selectedGame, games])
+  }, [selectedGame, games]);
 
   const handleSubmit = async () => {
     if (!selectedGame) {
