@@ -11,6 +11,7 @@ export default function SetupLineup() {
   const [awayPitcher, setAwayPitcher] = useState('')
   const [homeTeam, setHomeTeam] = useState('')
   const [awayTeam, setAwayTeam] = useState('')
+  const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
 
   useEffect(() => {
     fetch('/api/games')
@@ -28,6 +29,16 @@ export default function SetupLineup() {
       console.log('🎯 選擇比賽:', game)
       setHomeTeam(game.home)
       setAwayTeam(game.away)
+
+      // Fetch lineup status for the selected game
+      fetch(`/api/check-lineup?game_id=${game.game_no}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('📝 登錄狀態:', data)
+          const homeRegistered = data.battingOrders.some(order => order.team === game.home)
+          const awayRegistered = data.battingOrders.some(order => order.team === game.away)
+          setRegisteredTeams({ home: homeRegistered, away: awayRegistered })
+        })
     }
   }, [selectedGame, games])
 
@@ -84,6 +95,7 @@ export default function SetupLineup() {
         {games.map(game => (
           <option key={game.game_no} value={game.game_no}>
             {game.date} - {game.away} @ {game.home}
+            {registeredTeams.away && registeredTeams.home ? ' (兩隊已登錄)' : registeredTeams.away ? ' (客隊已登錄)' : registeredTeams.home ? ' (主隊已登錄)' : ''}
           </option>
         ))}
       </select>
