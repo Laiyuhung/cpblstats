@@ -12,6 +12,7 @@ export default function SetupLineup() {
   const [homeTeam, setHomeTeam] = useState('')
   const [awayTeam, setAwayTeam] = useState('')
   const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
+  const [isEditing, setIsEditing] = useState(false)
 
   useEffect(() => {
     fetch('/api/games')
@@ -95,10 +96,21 @@ export default function SetupLineup() {
         {games.map(game => (
           <option key={game.game_no} value={game.game_no}>
             {game.date} - {game.away} @ {game.home}
-            {registeredTeams.away && registeredTeams.home ? ' (兩隊已登錄)' : registeredTeams.away ? ' (客隊已登錄)' : registeredTeams.home ? ' (主隊已登錄)' : ''}
           </option>
         ))}
       </select>
+
+      <div className="mb-4">
+        <p>登錄狀態：</p>
+        <p>{registeredTeams.away ? `${awayTeam} 已登錄` : `${awayTeam} 未登錄`}</p>
+        <p>{registeredTeams.home ? `${homeTeam} 已登錄` : `${homeTeam} 未登錄`}</p>
+      </div>
+
+      <button
+        className="bg-gray-600 text-white px-4 py-2 rounded mb-4"
+        onClick={() => setIsEditing(!isEditing)}
+      >
+        {isEditing ? '完成編輯' : '編輯'}</button>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -114,6 +126,7 @@ export default function SetupLineup() {
                   copy[idx] = { ...copy[idx], position: e.target.value }
                   setAwayBatters(copy)
                 }}
+                disabled={!isEditing}
               />
               <input
                 className="border p-1 w-1/2"
@@ -124,10 +137,17 @@ export default function SetupLineup() {
                   copy[idx] = { ...copy[idx], name: e.target.value }
                   setAwayBatters(copy)
                 }}
+                disabled={!isEditing}
               />
             </div>
           ))}
-          <input value={awayPitcher} onChange={e => setAwayPitcher(e.target.value)} className="border p-1 w-full mt-2" placeholder="客隊先發投手" />
+          <input
+            value={awayPitcher}
+            onChange={e => setAwayPitcher(e.target.value)}
+            className="border p-1 w-full mt-2"
+            placeholder="客隊先發投手"
+            disabled={!isEditing}
+          />
         </div>
 
         <div>
@@ -143,6 +163,7 @@ export default function SetupLineup() {
                   copy[idx] = { ...copy[idx], position: e.target.value }
                   setHomeBatters(copy)
                 }}
+                disabled={!isEditing}
               />
               <input
                 className="border p-1 w-1/2"
@@ -153,14 +174,27 @@ export default function SetupLineup() {
                   copy[idx] = { ...copy[idx], name: e.target.value }
                   setHomeBatters(copy)
                 }}
+                disabled={!isEditing}
               />
             </div>
           ))}
-          <input value={homePitcher} onChange={e => setHomePitcher(e.target.value)} className="border p-1 w-full mt-2" placeholder="主隊先發投手" />
+          <input
+            value={homePitcher}
+            onChange={e => setHomePitcher(e.target.value)}
+            className="border p-1 w-full mt-2"
+            placeholder="主隊先發投手"
+            disabled={!isEditing}
+          />
         </div>
       </div>
 
-      <button className="bg-blue-600 text-white px-4 py-2 rounded mt-4" onClick={handleSubmit}>提交</button>
+      <button
+        className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+        onClick={handleSubmit}
+        disabled={!isEditing}
+      >
+        提交
+      </button>
     </div>
   )
 }
