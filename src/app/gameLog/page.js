@@ -12,6 +12,8 @@ export default function SetupLineup() {
   const [homeTeam, setHomeTeam] = useState('')
   const [awayTeam, setAwayTeam] = useState('')
   const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingPlayer, setEditingPlayer] = useState({ team: null, index: null })
 
   useEffect(() => {
     fetch('/api/games')
@@ -58,7 +60,35 @@ export default function SetupLineup() {
   }, [selectedGame, games])
 
   const handleEditClick = (team, index, isPitcher = false) => {
-    console.log(`Edit clicked for ${team} ${isPitcher ? 'pitcher' : `batter ${index}`}`)
+    if (isPitcher) {
+      setEditingPlayer({ team, index: 'pitcher' })
+    } else {
+      setEditingPlayer({ team, index })
+    }
+  }
+
+  const handleInputChange = (team, index, field, value) => {
+    if (team === 'home') {
+      const copy = [...homeBatters]
+      copy[index] = { ...copy[index], [field]: value }
+      setHomeBatters(copy)
+    } else if (team === 'away') {
+      const copy = [...awayBatters]
+      copy[index] = { ...copy[index], [field]: value }
+      setAwayBatters(copy)
+    }
+  }
+
+  const isCellEditable = (team, index) => {
+    const isRegistered = registeredTeams[team]
+    if (!isRegistered) return true
+    return editingPlayer.team === team && editingPlayer.index === index
+  }
+
+  const isPitcherEditable = (team) => {
+    const isRegistered = registeredTeams[team]
+    if (!isRegistered) return true
+    return editingPlayer.team === team && editingPlayer.index === 'pitcher'
   }
 
   const handleSubmit = async () => {
@@ -118,15 +148,39 @@ export default function SetupLineup() {
         <p>{registeredTeams.home ? `${homeTeam} 已登錄` : `${homeTeam} 未登錄`}</p>
       </div>
 
+      <button
+        className="bg-gray-600 text-white px-4 py-2 rounded mb-4"
+        onClick={() => setIsEditing(!isEditing)}
+      >
+        {isEditing ? '完成編輯' : '編輯'}
+      </button>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
           {awayBatters.map((batter, idx) => (
             <div key={idx} className="flex gap-2 mb-1 items-center">
-              <>
-                <span className="w-1/2">{batter.position || '未設定'}</span>
-                <span className="w-1/2">{batter.name || '未設定'}</span>
-              </>
+              {isCellEditable('away', idx) ? (
+                <>
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder="守位"
+                    value={batter.position}
+                    onChange={e => handleInputChange('away', idx, 'position', e.target.value)}
+                  />
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder={`第 ${idx + 1} 棒選手`}
+                    value={batter.name}
+                    onChange={e => handleInputChange('away', idx, 'name', e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <span className="w-1/2">{batter.position || '未設定'}</span>
+                  <span className="w-1/2">{batter.name || '未設定'}</span>
+                </>
+              )}
               {registeredTeams.away && (batter.name || batter.position) && (
                 <button
                   className="ml-2 text-blue-500"
@@ -138,7 +192,16 @@ export default function SetupLineup() {
             </div>
           ))}
           <div className="flex gap-2 items-center mt-2">
-            <span className="w-full">{awayPitcher || '未設定'}</span>
+            {isPitcherEditable('away') ? (
+              <input
+                value={awayPitcher}
+                onChange={e => setAwayPitcher(e.target.value)}
+                className="border p-1 w-full"
+                placeholder="客隊先發投手"
+              />
+            ) : (
+              <span className="w-full">{awayPitcher || '未設定'}</span>
+            )}
             {registeredTeams.away && awayPitcher && (
               <button
                 className="ml-2 text-blue-500"
@@ -154,10 +217,27 @@ export default function SetupLineup() {
           <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
           {homeBatters.map((batter, idx) => (
             <div key={idx} className="flex gap-2 mb-1 items-center">
-              <>
-                <span className="w-1/2">{batter.position || '未設定'}</span>
-                <span className="w-1/2">{batter.name || '未設定'}</span>
-              </>
+              {isCellEditable('home', idx) ? (
+                <>
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder="守位"
+                    value={batter.position}
+                    onChange={e => handleInputChange('home', idx, 'position', e.target.value)}
+                  />
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder={`第 ${idx + 1} 棒選手`}
+                    value={batter.name}
+                    onChange={e => handleInputChange('home', idx, 'name', e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <span className="w-1/2">{batter.position || '未設定'}</span>
+                  <span className="w-1/2">{batter.name || '未設定'}</span>
+                </>
+              )}
               {registeredTeams.home && (batter.name || batter.position) && (
                 <button
                   className="ml-2 text-blue-500"
@@ -169,7 +249,16 @@ export default function SetupLineup() {
             </div>
           ))}
           <div className="flex gap-2 items-center mt-2">
-            <span className="w-full">{homePitcher || '未設定'}</span>
+            {isPitcherEditable('home') ? (
+              <input
+                value={homePitcher}
+                onChange={e => setHomePitcher(e.target.value)}
+                className="border p-1 w-full"
+                placeholder="主隊先發投手"
+              />
+            ) : (
+              <span className="w-full">{homePitcher || '未設定'}</span>
+            )}
             {registeredTeams.home && homePitcher && (
               <button
                 className="ml-2 text-blue-500"
@@ -185,6 +274,7 @@ export default function SetupLineup() {
       <button
         className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
         onClick={handleSubmit}
+        disabled={!isEditing}
       >
         提交
       </button>
