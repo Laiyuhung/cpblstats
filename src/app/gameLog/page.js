@@ -67,14 +67,6 @@ export default function SetupLineup() {
     }
   }, [selectedGame, games]);
 
-  const handleEditClick = (team, index, isPitcher = false) => {
-    if (isPitcher) {
-      setEditingPlayer({ team, index: 'pitcher' });
-    } else {
-      setEditingPlayer({ team, index });
-    }
-  };
-
   const handleInputChange = (team, index, field, value) => {
     if (team === 'home') {
       const copy = [...homeBatters];
