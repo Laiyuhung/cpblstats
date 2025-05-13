@@ -13,6 +13,7 @@ export default function SetupLineup() {
   const [awayTeam, setAwayTeam] = useState('')
   const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
   const [isEditing, setIsEditing] = useState(false)
+  const [editingPlayer, setEditingPlayer] = useState({ team: null, index: null })
 
   useEffect(() => {
     fetch('/api/games')
@@ -62,6 +63,22 @@ export default function SetupLineup() {
         });
     }
   }, [selectedGame, games]);
+
+  const handleEditClick = (team, index) => {
+    setEditingPlayer({ team, index });
+  };
+
+  const handleInputChange = (team, index, field, value) => {
+    if (team === 'home') {
+      const copy = [...homeBatters];
+      copy[index] = { ...copy[index], [field]: value };
+      setHomeBatters(copy);
+    } else if (team === 'away') {
+      const copy = [...awayBatters];
+      copy[index] = { ...copy[index], [field]: value };
+      setAwayBatters(copy);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!selectedGame) {
@@ -136,29 +153,34 @@ export default function SetupLineup() {
         <div>
           <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
           {awayBatters.map((batter, idx) => (
-            <div key={idx} className="flex gap-2 mb-1">
-              <input
-                className="border p-1 w-1/2"
-                placeholder="守位"
-                value={batter.position}
-                onChange={e => {
-                  const copy = [...awayBatters]
-                  copy[idx] = { ...copy[idx], position: e.target.value }
-                  setAwayBatters(copy)
-                }}
-                disabled={!isEditing}
-              />
-              <input
-                className="border p-1 w-1/2"
-                placeholder={`第 ${idx + 1} 棒選手`}
-                value={batter.name}
-                onChange={e => {
-                  const copy = [...awayBatters]
-                  copy[idx] = { ...copy[idx], name: e.target.value }
-                  setAwayBatters(copy)
-                }}
-                disabled={!isEditing}
-              />
+            <div key={idx} className="flex gap-2 mb-1 items-center">
+              {editingPlayer.team === 'away' && editingPlayer.index === idx ? (
+                <>
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder="守位"
+                    value={batter.position}
+                    onChange={e => handleInputChange('away', idx, 'position', e.target.value)}
+                  />
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder={`第 ${idx + 1} 棒選手`}
+                    value={batter.name}
+                    onChange={e => handleInputChange('away', idx, 'name', e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <span className="w-1/2">{batter.position || '未設定'}</span>
+                  <span className="w-1/2">{batter.name || '未設定'}</span>
+                </>
+              )}
+              <button
+                className="ml-2 text-blue-500"
+                onClick={() => handleEditClick('away', idx)}
+              >
+                ✏️
+              </button>
             </div>
           ))}
           <input
@@ -173,29 +195,34 @@ export default function SetupLineup() {
         <div>
           <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
           {homeBatters.map((batter, idx) => (
-            <div key={idx} className="flex gap-2 mb-1">
-              <input
-                className="border p-1 w-1/2"
-                placeholder="守位"
-                value={batter.position}
-                onChange={e => {
-                  const copy = [...homeBatters]
-                  copy[idx] = { ...copy[idx], position: e.target.value }
-                  setHomeBatters(copy)
-                }}
-                disabled={!isEditing}
-              />
-              <input
-                className="border p-1 w-1/2"
-                placeholder={`第 ${idx + 1} 棒選手`}
-                value={batter.name}
-                onChange={e => {
-                  const copy = [...homeBatters]
-                  copy[idx] = { ...copy[idx], name: e.target.value }
-                  setHomeBatters(copy)
-                }}
-                disabled={!isEditing}
-              />
+            <div key={idx} className="flex gap-2 mb-1 items-center">
+              {editingPlayer.team === 'home' && editingPlayer.index === idx ? (
+                <>
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder="守位"
+                    value={batter.position}
+                    onChange={e => handleInputChange('home', idx, 'position', e.target.value)}
+                  />
+                  <input
+                    className="border p-1 w-1/2"
+                    placeholder={`第 ${idx + 1} 棒選手`}
+                    value={batter.name}
+                    onChange={e => handleInputChange('home', idx, 'name', e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <span className="w-1/2">{batter.position || '未設定'}</span>
+                  <span className="w-1/2">{batter.name || '未設定'}</span>
+                </>
+              )}
+              <button
+                className="ml-2 text-blue-500"
+                onClick={() => handleEditClick('home', idx)}
+              >
+                ✏️
+              </button>
             </div>
           ))}
           <input
