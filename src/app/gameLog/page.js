@@ -161,7 +161,7 @@ export default function SetupLineup() {
                   <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
                   {awayBatters.map((batter, idx) => (
                     <div key={idx} className="flex gap-2 mb-1 items-center">
-                      <span className="font-bold text-black">{idx + 1}</span>
+                      <span className="font-bold text-red-500">{idx + 1}</span>
                       {isCellEditable('away', idx) ? (
                         <>
                           <input
@@ -194,7 +194,7 @@ export default function SetupLineup() {
                     </div>
                   ))}
                   <div className="flex gap-2 items-center mt-2">
-                    <span className="font-bold text-black">P</span>
+                    <span className="font-bold text-red-500">P</span>
                     {isPitcherEditable('away') ? (
                       <input
                         value={awayPitcher}
@@ -220,7 +220,7 @@ export default function SetupLineup() {
                   <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
                   {homeBatters.map((batter, idx) => (
                     <div key={idx} className="flex gap-2 mb-1 items-center">
-                      <span className="font-bold text-black">{idx + 1}</span>
+                      <span className="font-bold text-red-500">{idx + 1}</span>
                       {isCellEditable('home', idx) ? (
                         <>
                           <input
@@ -253,7 +253,7 @@ export default function SetupLineup() {
                     </div>
                   ))}
                   <div className="flex gap-2 items-center mt-2">
-                    <span className="font-bold text-black">P</span>
+                    <span className="font-bold text-red-500">P</span>
                     {isPitcherEditable('home') ? (
                       <input
                         value={homePitcher}
