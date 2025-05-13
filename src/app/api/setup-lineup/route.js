@@ -17,13 +17,35 @@ export async function POST(req) {
       team: order.team           // 🟢 A 或 B，表示是主隊或客隊
     }))
 
-    const { error: insertBattingError } = await supabase
+    const { data: existingBattingOrders, error: fetchBattingError } = await supabase
       .from('batting_orders_for_stats')
-      .insert(battingRows)
+      .select('*')
+      .eq('game_id', game_id)
+      .in('team', batting_orders.map(order => order.team));
 
-    if (insertBattingError) {
-      console.error('❌ 插入打序失敗:', insertBattingError.message)
-      return NextResponse.json({ error: '打序寫入失敗' }, { status: 500 })
+    if (fetchBattingError) {
+      console.error('❌ 查詢打序失敗:', fetchBattingError.message);
+      return NextResponse.json({ error: '查詢打序失敗' }, { status: 500 });
+    }
+
+    if (existingBattingOrders.length > 0) {
+      const { error: updateBattingError } = await supabase
+        .from('batting_orders_for_stats')
+        .upsert(battingRows, { onConflict: ['game_id', 'team', 'batter_order'] });
+
+      if (updateBattingError) {
+        console.error('❌ 更新打序失敗:', updateBattingError.message);
+        return NextResponse.json({ error: '打序更新失敗' }, { status: 500 });
+      }
+    } else {
+      const { error: insertBattingError } = await supabase
+        .from('batting_orders_for_stats')
+        .insert(battingRows);
+
+      if (insertBattingError) {
+        console.error('❌ 插入打序失敗:', insertBattingError.message);
+        return NextResponse.json({ error: '打序寫入失敗' }, { status: 500 });
+      }
     }
 
     const pitcherRows = starting_pitchers.map(p => ({
@@ -32,13 +54,35 @@ export async function POST(req) {
       team: p.team
     }))
 
-    const { error: insertPitcherError } = await supabase
+    const { data: existingPitchers, error: fetchPitcherError } = await supabase
       .from('starting_pitchers_for_stats')
-      .insert(pitcherRows)
+      .select('*')
+      .eq('game_id', game_id)
+      .in('team', starting_pitchers.map(p => p.team));
 
-    if (insertPitcherError) {
-      console.error('❌ 插入投手失敗:', insertPitcherError.message)
-      return NextResponse.json({ error: '投手寫入失敗' }, { status: 500 })
+    if (fetchPitcherError) {
+      console.error('❌ 查詢投手失敗:', fetchPitcherError.message);
+      return NextResponse.json({ error: '查詢投手失敗' }, { status: 500 });
+    }
+
+    if (existingPitchers.length > 0) {
+      const { error: updatePitcherError } = await supabase
+        .from('starting_pitchers_for_stats')
+        .upsert(pitcherRows, { onConflict: ['game_id', 'team'] });
+
+      if (updatePitcherError) {
+        console.error('❌ 更新投手失敗:', updatePitcherError.message);
+        return NextResponse.json({ error: '投手更新失敗' }, { status: 500 });
+      }
+    } else {
+      const { error: insertPitcherError } = await supabase
+        .from('starting_pitchers_for_stats')
+        .insert(pitcherRows);
+
+      if (insertPitcherError) {
+        console.error('❌ 插入投手失敗:', insertPitcherError.message);
+        return NextResponse.json({ error: '投手寫入失敗' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ message: '登錄成功' })
