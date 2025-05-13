@@ -64,8 +64,12 @@ export default function SetupLineup() {
     }
   }, [selectedGame, games]);
 
-  const handleEditClick = (team, index) => {
-    setEditingPlayer({ team, index });
+  const handleEditClick = (team, index, isPitcher = false) => {
+    if (isPitcher) {
+      setEditingPlayer({ team, index: 'pitcher' });
+    } else {
+      setEditingPlayer({ team, index });
+    }
   };
 
   const handleInputChange = (team, index, field, value) => {
@@ -175,21 +179,40 @@ export default function SetupLineup() {
                   <span className="w-1/2">{batter.name || '未設定'}</span>
                 </>
               )}
+              {batter.name || batter.position ? (
+                <button
+                  className="ml-2 text-blue-500"
+                  onClick={() => handleEditClick('away', idx)}
+                >
+                  ✏️
+                </button>
+              ) : (
+                <span className="ml-2">&nbsp;</span>
+              )}
+            </div>
+          ))}
+          <div className="flex gap-2 items-center mt-2">
+            {editingPlayer.team === 'away' && editingPlayer.index === 'pitcher' ? (
+              <input
+                value={awayPitcher}
+                onChange={e => setAwayPitcher(e.target.value)}
+                className="border p-1 w-full"
+                placeholder="客隊先發投手"
+              />
+            ) : (
+              <span className="w-full">{awayPitcher || '未設定'}</span>
+            )}
+            {awayPitcher ? (
               <button
                 className="ml-2 text-blue-500"
-                onClick={() => handleEditClick('away', idx)}
+                onClick={() => handleEditClick('away', null, true)}
               >
                 ✏️
               </button>
-            </div>
-          ))}
-          <input
-            value={awayPitcher}
-            onChange={e => setAwayPitcher(e.target.value)}
-            className="border p-1 w-full mt-2"
-            placeholder="客隊先發投手"
-            disabled={!isEditing}
-          />
+            ) : (
+              <span className="ml-2">&nbsp;</span>
+            )}
+          </div>
         </div>
 
         <div>
@@ -217,21 +240,40 @@ export default function SetupLineup() {
                   <span className="w-1/2">{batter.name || '未設定'}</span>
                 </>
               )}
+              {batter.name || batter.position ? (
+                <button
+                  className="ml-2 text-blue-500"
+                  onClick={() => handleEditClick('home', idx)}
+                >
+                  ✏️
+                </button>
+              ) : (
+                <span className="ml-2">&nbsp;</span>
+              )}
+            </div>
+          ))}
+          <div className="flex gap-2 items-center mt-2">
+            {editingPlayer.team === 'home' && editingPlayer.index === 'pitcher' ? (
+              <input
+                value={homePitcher}
+                onChange={e => setHomePitcher(e.target.value)}
+                className="border p-1 w-full"
+                placeholder="主隊先發投手"
+              />
+            ) : (
+              <span className="w-full">{homePitcher || '未設定'}</span>
+            )}
+            {homePitcher ? (
               <button
                 className="ml-2 text-blue-500"
-                onClick={() => handleEditClick('home', idx)}
+                onClick={() => handleEditClick('home', null, true)}
               >
                 ✏️
               </button>
-            </div>
-          ))}
-          <input
-            value={homePitcher}
-            onChange={e => setHomePitcher(e.target.value)}
-            className="border p-1 w-full mt-2"
-            placeholder="主隊先發投手"
-            disabled={!isEditing}
-          />
+            ) : (
+              <span className="ml-2">&nbsp;</span>
+            )}
+          </div>
         </div>
       </div>
 
