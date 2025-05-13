@@ -165,7 +165,12 @@ export default function SetupLineup() {
               <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
               {awayBatters.map((batter, idx) => (
                 <div key={idx} className="flex gap-2 mb-1 items-center">
-                  {editingPlayer.team === 'away' && editingPlayer.index === idx ? (
+                  {batter.name || batter.position ? (
+                    <>
+                      <span className="w-1/2">{batter.position}</span>
+                      <span className="w-1/2">{batter.name}</span>
+                    </>
+                  ) : (
                     <>
                       <input
                         className="border p-1 w-1/2"
@@ -180,29 +185,6 @@ export default function SetupLineup() {
                         onChange={e => handleInputChange('away', idx, 'name', e.target.value)}
                       />
                     </>
-                  ) : (
-                    <>
-                      <input
-                        className="border p-1 w-1/2"
-                        placeholder="守位"
-                        value={batter.position}
-                        readOnly
-                      />
-                      <input
-                        className="border p-1 w-1/2"
-                        placeholder={`第 ${idx + 1} 棒選手`}
-                        value={batter.name}
-                        readOnly
-                      />
-                    </>
-                  )}
-                  {(batter.name || batter.position) && (
-                    <button
-                      className="ml-2 text-blue-500"
-                      onClick={() => handleEditClick('away', idx)}
-                    >
-                      ✏️
-                    </button>
                   )}
                 </div>
               ))}
@@ -222,14 +204,6 @@ export default function SetupLineup() {
                     readOnly
                   />
                 )}
-                {awayPitcher && (
-                  <button
-                    className="ml-2 text-blue-500"
-                    onClick={() => handleEditClick('away', null, true)}
-                  >
-                    ✏️
-                  </button>
-                )}
               </div>
             </div>
 
@@ -237,7 +211,12 @@ export default function SetupLineup() {
               <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
               {homeBatters.map((batter, idx) => (
                 <div key={idx} className="flex gap-2 mb-1 items-center">
-                  {editingPlayer.team === 'home' && editingPlayer.index === idx ? (
+                  {batter.name || batter.position ? (
+                    <>
+                      <span className="w-1/2">{batter.position}</span>
+                      <span className="w-1/2">{batter.name}</span>
+                    </>
+                  ) : (
                     <>
                       <input
                         className="border p-1 w-1/2"
@@ -252,29 +231,6 @@ export default function SetupLineup() {
                         onChange={e => handleInputChange('home', idx, 'name', e.target.value)}
                       />
                     </>
-                  ) : (
-                    <>
-                      <input
-                        className="border p-1 w-1/2"
-                        placeholder="守位"
-                        value={batter.position}
-                        readOnly
-                      />
-                      <input
-                        className="border p-1 w-1/2"
-                        placeholder={`第 ${idx + 1} 棒選手`}
-                        value={batter.name}
-                        readOnly
-                      />
-                    </>
-                  )}
-                  {(batter.name || batter.position) && (
-                    <button
-                      className="ml-2 text-blue-500"
-                      onClick={() => handleEditClick('home', idx)}
-                    >
-                      ✏️
-                    </button>
                   )}
                 </div>
               ))}
@@ -293,14 +249,6 @@ export default function SetupLineup() {
                     value={homePitcher}
                     readOnly
                   />
-                )}
-                {homePitcher && (
-                  <button
-                    className="ml-2 text-blue-500"
-                    onClick={() => handleEditClick('home', null, true)}
-                  >
-                    ✏️
-                  </button>
                 )}
               </div>
             </div>
