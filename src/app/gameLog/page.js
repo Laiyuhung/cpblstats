@@ -12,8 +12,8 @@ export default function SetupLineup() {
   const [homeTeam, setHomeTeam] = useState('')
   const [awayTeam, setAwayTeam] = useState('')
   const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
-  const [isEditing, setIsEditing] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState({ team: null, index: null })
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/games')
@@ -27,6 +27,7 @@ export default function SetupLineup() {
   useEffect(() => {
     const game = games.find(g => g.game_no === Number(selectedGame));
     if (game) {
+      setIsLoading(true) // 加這行
       setHomeTeam(game.home)
       setAwayTeam(game.away)
 
@@ -56,6 +57,7 @@ export default function SetupLineup() {
           setHomePitcher(homePitcherData ? homePitcherData.pitcher_name : '')
           setAwayPitcher(awayPitcherData ? awayPitcherData.pitcher_name : '')
         })
+        .finally(() => setIsLoading(false)) // ✅ 最後關掉 loading
     }
   }, [selectedGame, games])
 
@@ -141,143 +143,147 @@ export default function SetupLineup() {
           </option>
         ))}
       </select>
+      
+      
+        {selectedGame && (
+          isLoading ? (
+            <p className="text-center text-gray-600">載入中...</p>
+          ) : (
+            <>
+              <div className="mb-4">
+                <p>登錄狀態：</p>
+                <p>{registeredTeams.away ? `${awayTeam} 已登錄` : `${awayTeam} 未登錄`}</p>
+                <p>{registeredTeams.home ? `${homeTeam} 已登錄` : `${homeTeam} 未登錄`}</p>
+              </div>
 
-      <div className="mb-4">
-        <p>登錄狀態：</p>
-        <p>{registeredTeams.away ? `${awayTeam} 已登錄` : `${awayTeam} 未登錄`}</p>
-        <p>{registeredTeams.home ? `${homeTeam} 已登錄` : `${homeTeam} 未登錄`}</p>
-      </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
+                  {awayBatters.map((batter, idx) => (
+                    <div key={idx} className="flex gap-2 mb-1 items-center">
+                      {isCellEditable('away', idx) ? (
+                        <>
+                          <input
+                            className="border p-1 w-1/2"
+                            placeholder="守位"
+                            value={batter.position}
+                            onChange={e => handleInputChange('away', idx, 'position', e.target.value)}
+                          />
+                          <input
+                            className="border p-1 w-1/2"
+                            placeholder={`第 ${idx + 1} 棒選手`}
+                            value={batter.name}
+                            onChange={e => handleInputChange('away', idx, 'name', e.target.value)}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-1/2">{batter.position || '未設定'}</span>
+                          <span className="w-1/2">{batter.name || '未設定'}</span>
+                        </>
+                      )}
+                      {registeredTeams.away && (batter.name || batter.position) && (
+                        <button
+                          className="ml-2 text-blue-500"
+                          onClick={() => handleEditClick('away', idx)}
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex gap-2 items-center mt-2">
+                    {isPitcherEditable('away') ? (
+                      <input
+                        value={awayPitcher}
+                        onChange={e => setAwayPitcher(e.target.value)}
+                        className="border p-1 w-full"
+                        placeholder="客隊先發投手"
+                      />
+                    ) : (
+                      <span className="w-full">{awayPitcher || '未設定'}</span>
+                    )}
+                    {registeredTeams.away && awayPitcher && (
+                      <button
+                        className="ml-2 text-blue-500"
+                        onClick={() => handleEditClick('away', null, true)}
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-      <button
-        className="bg-gray-600 text-white px-4 py-2 rounded mb-4"
-        onClick={() => setIsEditing(!isEditing)}
-      >
-        {isEditing ? '完成編輯' : '編輯'}
-      </button>
+                <div>
+                  <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
+                  {homeBatters.map((batter, idx) => (
+                    <div key={idx} className="flex gap-2 mb-1 items-center">
+                      {isCellEditable('home', idx) ? (
+                        <>
+                          <input
+                            className="border p-1 w-1/2"
+                            placeholder="守位"
+                            value={batter.position}
+                            onChange={e => handleInputChange('home', idx, 'position', e.target.value)}
+                          />
+                          <input
+                            className="border p-1 w-1/2"
+                            placeholder={`第 ${idx + 1} 棒選手`}
+                            value={batter.name}
+                            onChange={e => handleInputChange('home', idx, 'name', e.target.value)}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-1/2">{batter.position || '未設定'}</span>
+                          <span className="w-1/2">{batter.name || '未設定'}</span>
+                        </>
+                      )}
+                      {registeredTeams.home && (batter.name || batter.position) && (
+                        <button
+                          className="ml-2 text-blue-500"
+                          onClick={() => handleEditClick('home', idx)}
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex gap-2 items-center mt-2">
+                    {isPitcherEditable('home') ? (
+                      <input
+                        value={homePitcher}
+                        onChange={e => setHomePitcher(e.target.value)}
+                        className="border p-1 w-full"
+                        placeholder="主隊先發投手"
+                      />
+                    ) : (
+                      <span className="w-full">{homePitcher || '未設定'}</span>
+                    )}
+                    {registeredTeams.home && homePitcher && (
+                      <button
+                        className="ml-2 text-blue-500"
+                        onClick={() => handleEditClick('home', null, true)}
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h2 className="font-semibold">{awayTeam || '客隊'}打序</h2>
-          {awayBatters.map((batter, idx) => (
-            <div key={idx} className="flex gap-2 mb-1 items-center">
-              {isCellEditable('away', idx) ? (
-                <>
-                  <input
-                    className="border p-1 w-1/2"
-                    placeholder="守位"
-                    value={batter.position}
-                    onChange={e => handleInputChange('away', idx, 'position', e.target.value)}
-                  />
-                  <input
-                    className="border p-1 w-1/2"
-                    placeholder={`第 ${idx + 1} 棒選手`}
-                    value={batter.name}
-                    onChange={e => handleInputChange('away', idx, 'name', e.target.value)}
-                  />
-                </>
-              ) : (
-                <>
-                  <span className="w-1/2">{batter.position || '未設定'}</span>
-                  <span className="w-1/2">{batter.name || '未設定'}</span>
-                </>
-              )}
-              {registeredTeams.away && (batter.name || batter.position) && (
-                <button
-                  className="ml-2 text-blue-500"
-                  onClick={() => handleEditClick('away', idx)}
-                >
-                  ✏️
-                </button>
-              )}
-            </div>
-          ))}
-          <div className="flex gap-2 items-center mt-2">
-            {isPitcherEditable('away') ? (
-              <input
-                value={awayPitcher}
-                onChange={e => setAwayPitcher(e.target.value)}
-                className="border p-1 w-full"
-                placeholder="客隊先發投手"
-              />
-            ) : (
-              <span className="w-full">{awayPitcher || '未設定'}</span>
-            )}
-            {registeredTeams.away && awayPitcher && (
               <button
-                className="ml-2 text-blue-500"
-                onClick={() => handleEditClick('away', null, true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+                onClick={handleSubmit}
               >
-                ✏️
+                提交
               </button>
-            )}
-          </div>
-        </div>
+            </>
+          )
+        )}
 
-        <div>
-          <h2 className="font-semibold">{homeTeam || '主隊'}打序</h2>
-          {homeBatters.map((batter, idx) => (
-            <div key={idx} className="flex gap-2 mb-1 items-center">
-              {isCellEditable('home', idx) ? (
-                <>
-                  <input
-                    className="border p-1 w-1/2"
-                    placeholder="守位"
-                    value={batter.position}
-                    onChange={e => handleInputChange('home', idx, 'position', e.target.value)}
-                  />
-                  <input
-                    className="border p-1 w-1/2"
-                    placeholder={`第 ${idx + 1} 棒選手`}
-                    value={batter.name}
-                    onChange={e => handleInputChange('home', idx, 'name', e.target.value)}
-                  />
-                </>
-              ) : (
-                <>
-                  <span className="w-1/2">{batter.position || '未設定'}</span>
-                  <span className="w-1/2">{batter.name || '未設定'}</span>
-                </>
-              )}
-              {registeredTeams.home && (batter.name || batter.position) && (
-                <button
-                  className="ml-2 text-blue-500"
-                  onClick={() => handleEditClick('home', idx)}
-                >
-                  ✏️
-                </button>
-              )}
-            </div>
-          ))}
-          <div className="flex gap-2 items-center mt-2">
-            {isPitcherEditable('home') ? (
-              <input
-                value={homePitcher}
-                onChange={e => setHomePitcher(e.target.value)}
-                className="border p-1 w-full"
-                placeholder="主隊先發投手"
-              />
-            ) : (
-              <span className="w-full">{homePitcher || '未設定'}</span>
-            )}
-            {registeredTeams.home && homePitcher && (
-              <button
-                className="ml-2 text-blue-500"
-                onClick={() => handleEditClick('home', null, true)}
-              >
-                ✏️
-              </button>
-            )}
-          </div>
-        </div>
       </div>
+    
 
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
-        onClick={handleSubmit}
-        disabled={!isEditing}
-      >
-        提交
-      </button>
-    </div>
   )
 }
