@@ -17,7 +17,6 @@ export default function GameRecord({ params }) {
   const [halfInning, setHalfInning] = useState('top') // top or bottom
   const [currentBatter, setCurrentBatter] = useState(null)
   const [currentPitcher, setCurrentPitcher] = useState(null)
-  const [atBatCount, setAtBatCount] = useState(1)
   const [outs, setOuts] = useState(0)
   const [bases, setBases] = useState({ first: false, second: false, third: false })
   const [isLoading, setIsLoading] = useState(true)
@@ -123,7 +122,7 @@ export default function GameRecord({ params }) {
       inning,
       half_inning: halfInning === 'top' ? '上' : '下',
       result,
-      at_bat: playByPlay.length + 1, // 根據 Play-by-Play 記錄數量計算 at_bat
+      at_bat: `${inning}-${halfInning}-${sequence}`, // 基於局數、半局和打席順序計算 at_bat
       rbis,
       sequence,
       base_condition: getBaseCondition(),
