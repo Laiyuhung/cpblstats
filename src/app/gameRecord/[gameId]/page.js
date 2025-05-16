@@ -22,6 +22,8 @@ export default function GameRecord({ params }) {
   const [bases, setBases] = useState({ first: false, second: false, third: false })
   const [isLoading, setIsLoading] = useState(true)
   const [sequence, setSequence] = useState(1)
+  const [rbis, setRbis] = useState(0)
+  const [editMode, setEditMode] = useState('state') // 'state' 或 'result'
 
   const resultOptions = [
     { value: 'IH', label: '內野安打' },
@@ -110,8 +112,7 @@ export default function GameRecord({ params }) {
     if (!first && !second && !third) return '無人'
     return `${first ? '一' : ''}${second ? '二' : ''}${third ? '三' : ''}`
   }
-
-  const handleRecordAtBat = async (result, rbis = 0) => {
+  const handleRecordAtBat = async (result) => {
     if (!currentBatter || !currentPitcher) return
 
     const atBatData = {
@@ -137,22 +138,25 @@ export default function GameRecord({ params }) {
 
       if (!res.ok) {
         throw new Error('記錄打席失敗')
-      }
-
-      // 更新計數
+      }      // 更新計數
       setSequence(seq => seq + 1)
       setAtBatCount(count => count + 1)
+      
+      // 重置打點計數
+      setRbis(0)
 
-      // 更新壘包狀態、出局數、換邊等邏輯
-      updateGameState(result, rbis)
+    // 更新壘包狀態、出局數、換邊等邏輯
+      updateGameState(result)
+      
+      // 重置回初始模式，設定下一打席的壘包狀態
+      setEditMode('state')
     } catch (error) {
       console.error('記錄失敗:', error)
       alert('記錄打席時發生錯誤')
     }
   }
-
   // 根據打擊結果更新比賽狀態
-  const updateGameState = (result, rbis) => {
+  const updateGameState = (result) => {
     // 處理出局數變化
     let newOuts = outs
     if (['K', 'F', 'FO', 'G', 'SF'].includes(result)) {
@@ -292,39 +296,130 @@ export default function GameRecord({ params }) {
         </div>
       </div>
 
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-bold mb-4">記錄打席結果</h2>
-        
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {resultOptions.map(option => (
-            <button
-              key={option.value}
-              className="bg-white border border-gray-300 p-2 rounded hover:bg-gray-100"
-              onClick={() => handleRecordAtBat(option.value, 0)}
-            >
-              {option.label} ({option.value})
-            </button>
-          ))}
+      {editMode === 'state' ? (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h2 className="text-xl font-bold mb-4">設定打擊前狀態</h2>
+          
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">出局數</h3>
+            <div className="flex gap-2 mb-4">
+              {[0, 1, 2].map(o => (
+                <button
+                  key={o}
+                  className={`border px-4 py-2 rounded ${outs === o ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => setOuts(o)}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">壘包狀態</h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <h4 className="text-sm mb-1">一壘</h4>
+                <div className="flex gap-2">
+                  <button
+                    className={`border px-4 py-2 rounded ${bases.first ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, first: true }))}
+                  >
+                    有人
+                  </button>
+                  <button
+                    className={`border px-4 py-2 rounded ${!bases.first ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, first: false }))}
+                  >
+                    無人
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm mb-1">二壘</h4>
+                <div className="flex gap-2">
+                  <button
+                    className={`border px-4 py-2 rounded ${bases.second ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, second: true }))}
+                  >
+                    有人
+                  </button>
+                  <button
+                    className={`border px-4 py-2 rounded ${!bases.second ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, second: false }))}
+                  >
+                    無人
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm mb-1">三壘</h4>
+                <div className="flex gap-2">
+                  <button
+                    className={`border px-4 py-2 rounded ${bases.third ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, third: true }))}
+                  >
+                    有人
+                  </button>
+                  <button
+                    className={`border px-4 py-2 rounded ${!bases.third ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                    onClick={() => setBases(prev => ({ ...prev, third: false }))}
+                  >
+                    無人
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <button 
+            className="bg-green-600 text-white px-4 py-2 rounded"
+            onClick={() => setEditMode('result')}
+          >
+            下一步：記錄打擊結果
+          </button>
         </div>
-        
-        <div className="mt-4">
-          <h3 className="font-semibold mb-2">打點 (RBI)</h3>
-          <div className="flex gap-2">
-            {[0, 1, 2, 3, 4].map(rbi => (
+      ) : (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h2 className="text-xl font-bold mb-4">記錄打擊結果</h2>
+          
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">打點 (RBI): {rbis}</h3>
+            <div className="flex gap-2 mb-3">
+              {[0, 1, 2, 3, 4].map(rbi => (
+                <button
+                  key={rbi}
+                  className={`border px-4 py-2 rounded ${rbis === rbi ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => setRbis(rbi)}
+                >
+                  {rbi}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {resultOptions.map(option => (
               <button
-                key={rbi}
-                className="bg-white border border-gray-300 px-4 py-2 rounded hover:bg-gray-100"
-                onClick={() => {
-                  const result = prompt('請輸入打擊結果代碼 (1B, 2B, 3B, HR, SF 等)');
-                  if (result) handleRecordAtBat(result, rbi);
-                }}
+                key={option.value}
+                className="bg-white border border-gray-300 p-2 rounded hover:bg-gray-100"
+                onClick={() => handleRecordAtBat(option.value)}
               >
-                {rbi}
+                {option.label} ({option.value})
               </button>
             ))}
           </div>
+          
+          <button 
+            className="bg-yellow-600 text-white px-4 py-2 rounded"
+            onClick={() => setEditMode('state')}
+          >
+            返回：修改壘包狀態
+          </button>
         </div>
-      </div>
+      )}
       
       <button
         className="bg-red-600 text-white px-4 py-2 rounded"
