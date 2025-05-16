@@ -2,12 +2,21 @@
 import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 
-export async function GET() {
+export async function GET(req) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(req.url)
+    const gameId = searchParams.get('game_id')
+
+    let query = supabase
       .from('cpbl_schedule')
       .select('game_no, date, home, away')
       .order('date', { ascending: true })
+
+    if (gameId) {
+      query = query.eq('game_no', gameId)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.error('❌ 無法取得賽程:', error.message)

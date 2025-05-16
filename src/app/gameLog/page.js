@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SetupLineup() {
+  const router = useRouter()
   const [games, setGames] = useState([])
   const [selectedGame, setSelectedGame] = useState('')
   const [homeBatters, setHomeBatters] = useState(Array(9).fill({ name: '', position: '' }))
@@ -14,6 +16,7 @@ export default function SetupLineup() {
   const [registeredTeams, setRegisteredTeams] = useState({ home: false, away: false })
   const [editingPlayer, setEditingPlayer] = useState({ team: null, index: null })
   const [isLoading, setIsLoading] = useState(false)
+  const [lineupComplete, setLineupComplete] = useState(false)
 
   useEffect(() => {
     fetch('/api/games')
@@ -37,6 +40,17 @@ export default function SetupLineup() {
           const homeRegistered = data.battingOrders.some(order => order.team === game.home)
           const awayRegistered = data.battingOrders.some(order => order.team === game.away)
           setRegisteredTeams({ home: homeRegistered, away: awayRegistered })
+
+          // 檢查兩隊是否都已完成登錄，且皆有9人打序和投手
+          const homeComplete = homeRegistered && 
+            data.battingOrders.filter(order => order.team === game.home).length === 9 && 
+            data.startingPitchers.some(p => p.team === game.home);
+          
+          const awayComplete = awayRegistered && 
+            data.battingOrders.filter(order => order.team === game.away).length === 9 && 
+            data.startingPitchers.some(p => p.team === game.away);
+          
+          setLineupComplete(homeComplete && awayComplete);
 
           const homeBattersData = data.battingOrders
             .filter(order => order.team === game.home)
@@ -282,6 +296,15 @@ export default function SetupLineup() {
               >
                 提交
               </button>
+
+              {lineupComplete && (
+                <button
+                  className="bg-green-600 text-white px-4 py-2 rounded mt-4 ml-4"
+                  onClick={() => router.push(`/gameRecord/${selectedGame}`)}
+                >
+                  開始記錄比賽
+                </button>
+              )}
             </>
           )
         )}
