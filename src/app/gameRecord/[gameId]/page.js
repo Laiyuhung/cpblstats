@@ -24,6 +24,7 @@ export default function GameRecord({ params }) {
   const [sequence, setSequence] = useState(1)
   const [rbis, setRbis] = useState(0)
   const [editMode, setEditMode] = useState('state') // 'state' 或 'result'
+  const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
 
   const resultOptions = [
     { value: 'IH', label: '內野安打' },
@@ -122,7 +123,7 @@ export default function GameRecord({ params }) {
       inning,
       half_inning: halfInning === 'top' ? '上' : '下',
       result,
-      at_bat: atBatCount,
+      at_bat: playByPlay.length + 1, // 根據 Play-by-Play 記錄數量計算 at_bat
       rbis,
       sequence,
       base_condition: getBaseCondition(),
@@ -138,16 +139,18 @@ export default function GameRecord({ params }) {
 
       if (!res.ok) {
         throw new Error('記錄打席失敗')
-      }      // 更新計數
+      }
+
+      // 更新 Play-by-Play 記錄
+      setPlayByPlay(prev => [...prev, atBatData])
+
+      // 更新計數
       setSequence(seq => seq + 1)
-      setAtBatCount(count => count + 1)
-      
-      // 重置打點計數
       setRbis(0)
 
-    // 更新壘包狀態、出局數、換邊等邏輯
+      // 更新壘包狀態、出局數、換邊等邏輯
       updateGameState(result)
-      
+
       // 重置回初始模式，設定下一打席的壘包狀態
       setEditMode('state')
     } catch (error) {
@@ -155,6 +158,7 @@ export default function GameRecord({ params }) {
       alert('記錄打席時發生錯誤')
     }
   }
+
   // 根據打擊結果更新比賽狀態
   const updateGameState = (result) => {
     // 處理出局數變化
@@ -242,7 +246,18 @@ export default function GameRecord({ params }) {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">比賽記錄</h1>
-      
+
+      <div className="bg-gray-100 p-4 rounded-lg mb-6">
+        <h2 className="text-xl font-bold mb-4">Play-by-Play 記錄</h2>
+        <ul className="list-disc pl-5">
+          {playByPlay.map((play, index) => (
+            <li key={index}>
+              {`第 ${play.inning} 局 ${play.half_inning}，${play.batter_name} 對 ${play.pitcher_name}，結果：${play.result}，打點：${play.rbis}`}
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div className="bg-gray-100 p-4 rounded-lg mb-6">
         <div className="text-xl font-bold mb-2">
           {game.date} - {awayTeam} @ {homeTeam}
