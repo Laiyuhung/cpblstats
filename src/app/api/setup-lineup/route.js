@@ -15,73 +15,87 @@ export async function POST(req) {
       batter_name: order.batter_name,
       position: order.position,  // 🟢 指的是守備位置，如 "SS", "2B"
       team: order.team           // 🟢 A 或 B，表示是主隊或客隊
-    }))
-
-    const { data: existingBattingOrders, error: fetchBattingError } = await supabase
-      .from('batting_orders_for_stats')
-      .select('*')
-      .eq('game_id', game_id)
-      .in('team', batting_orders.map(order => order.team));
-
-    if (fetchBattingError) {
-      console.error('❌ 查詢打序失敗:', fetchBattingError.message);
-      return NextResponse.json({ error: '查詢打序失敗' }, { status: 500 });
-    }
-
-    if (existingBattingOrders.length > 0) {
-      const { error: updateBattingError } = await supabase
+    }))    // 檢查每隊是否已經存在打序
+    const teamsToCheck = [...new Set(batting_orders.map(order => order.team))];
+    
+    for (const team of teamsToCheck) {
+      const teamBattingRows = battingRows.filter(row => row.team === team);
+      
+      const { data: existingTeamBatters, error: fetchTeamError } = await supabase
         .from('batting_orders_for_stats')
-        .upsert(battingRows, { onConflict: ['game_id', 'team', 'batter_order'] });
-
-      if (updateBattingError) {
-        console.error('❌ 更新打序失敗:', updateBattingError.message);
-        return NextResponse.json({ error: '打序更新失敗' }, { status: 500 });
+        .select('*')
+        .eq('game_id', game_id)
+        .eq('team', team);
+      
+      if (fetchTeamError) {
+        console.error(`❌ 查詢 ${team} 打序失敗:`, fetchTeamError.message);
+        return NextResponse.json({ error: `查詢 ${team} 打序失敗` }, { status: 500 });
       }
-    } else {
-      const { error: insertBattingError } = await supabase
-        .from('batting_orders_for_stats')
-        .insert(battingRows);
-
-      if (insertBattingError) {
-        console.error('❌ 插入打序失敗:', insertBattingError.message);
-        return NextResponse.json({ error: '打序寫入失敗' }, { status: 500 });
+      
+      if (existingTeamBatters && existingTeamBatters.length > 0) {
+        console.log(`🔄 ${team} 隊已有打序記錄，進行更新`);
+        // 該隊已有記錄，進行更新
+        const { error: updateError } = await supabase
+          .from('batting_orders_for_stats')
+          .upsert(teamBattingRows, { onConflict: ['game_id', 'team', 'batter_order'] });
+        
+        if (updateError) {
+          console.error(`❌ 更新 ${team} 打序失敗:`, updateError.message);
+          return NextResponse.json({ error: `${team} 打序更新失敗` }, { status: 500 });
+        }
+      } else {
+        console.log(`➕ 新增 ${team} 隊打序記錄`);
+        // 該隊無記錄，進行插入
+        const { error: insertError } = await supabase
+          .from('batting_orders_for_stats')
+          .insert(teamBattingRows);
+        
+        if (insertError) {
+          console.error(`❌ 插入 ${team} 打序失敗:`, insertError.message);
+          return NextResponse.json({ error: `${team} 打序寫入失敗` }, { status: 500 });
+        }
       }
-    }
-
-    const pitcherRows = starting_pitchers.map(p => ({
-      game_id,
-      pitcher_name: p.pitcher_name,
-      team: p.team
-    }))
-
-    const { data: existingPitchers, error: fetchPitcherError } = await supabase
-      .from('starting_pitchers_for_stats')
-      .select('*')
-      .eq('game_id', game_id)
-      .in('team', starting_pitchers.map(p => p.team));
-
-    if (fetchPitcherError) {
-      console.error('❌ 查詢投手失敗:', fetchPitcherError.message);
-      return NextResponse.json({ error: '查詢投手失敗' }, { status: 500 });
-    }
-
-    if (existingPitchers.length > 0) {
-      const { error: updatePitcherError } = await supabase
+    }    // 檢查每隊是否已經存在先發投手
+    for (const pitcher of starting_pitchers) {
+      const pitcherRow = {
+        game_id,
+        pitcher_name: pitcher.pitcher_name,
+        team: pitcher.team
+      };
+      
+      const { data: existingPitcher, error: fetchPitcherError } = await supabase
         .from('starting_pitchers_for_stats')
-        .upsert(pitcherRows, { onConflict: ['game_id', 'team'] });
-
-      if (updatePitcherError) {
-        console.error('❌ 更新投手失敗:', updatePitcherError.message);
-        return NextResponse.json({ error: '投手更新失敗' }, { status: 500 });
+        .select('*')
+        .eq('game_id', game_id)
+        .eq('team', pitcher.team);
+      
+      if (fetchPitcherError) {
+        console.error(`❌ 查詢 ${pitcher.team} 投手失敗:`, fetchPitcherError.message);
+        return NextResponse.json({ error: `查詢 ${pitcher.team} 投手失敗` }, { status: 500 });
       }
-    } else {
-      const { error: insertPitcherError } = await supabase
-        .from('starting_pitchers_for_stats')
-        .insert(pitcherRows);
-
-      if (insertPitcherError) {
-        console.error('❌ 插入投手失敗:', insertPitcherError.message);
-        return NextResponse.json({ error: '投手寫入失敗' }, { status: 500 });
+      
+      if (existingPitcher && existingPitcher.length > 0) {
+        console.log(`🔄 更新 ${pitcher.team} 隊先發投手: ${pitcher.pitcher_name}`);
+        // 該隊已有記錄，進行更新
+        const { error: updateError } = await supabase
+          .from('starting_pitchers_for_stats')
+          .upsert(pitcherRow, { onConflict: ['game_id', 'team'] });
+        
+        if (updateError) {
+          console.error(`❌ 更新 ${pitcher.team} 投手失敗:`, updateError.message);
+          return NextResponse.json({ error: `${pitcher.team} 投手更新失敗` }, { status: 500 });
+        }
+      } else {
+        console.log(`➕ 新增 ${pitcher.team} 隊先發投手: ${pitcher.pitcher_name}`);
+        // 該隊無記錄，進行插入
+        const { error: insertError } = await supabase
+          .from('starting_pitchers_for_stats')
+          .insert(pitcherRow);
+        
+        if (insertError) {
+          console.error(`❌ 插入 ${pitcher.team} 投手失敗:`, insertError.message);
+          return NextResponse.json({ error: `${pitcher.team} 投手寫入失敗` }, { status: 500 });
+        }
       }
     }
 
