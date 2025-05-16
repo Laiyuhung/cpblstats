@@ -31,16 +31,27 @@ export async function POST(req) {
         console.error(`❌ 查詢 ${team} 打序失敗:`, fetchTeamError.message);
         return NextResponse.json({ error: `查詢 ${team} 打序失敗` }, { status: 500 });
       }
-      
-      if (existingTeamBatters && existingTeamBatters.length > 0) {
-        console.log(`🔄 ${team} 隊已有打序記錄，進行更新`);
-        // 該隊已有記錄，進行更新
-        const { error: updateError } = await supabase
+        if (existingTeamBatters && existingTeamBatters.length > 0) {
+        console.log(`🔄 ${team} 隊已有打序記錄，先刪除再新增`);
+        // 該隊已有記錄，先刪除舊記錄
+        const { error: deleteError } = await supabase
           .from('batting_orders_for_stats')
-          .upsert(teamBattingRows, { onConflict: ['game_id', 'team', 'batter_order'] });
+          .delete()
+          .eq('game_id', game_id)
+          .eq('team', team);
         
-        if (updateError) {
-          console.error(`❌ 更新 ${team} 打序失敗:`, updateError.message);
+        if (deleteError) {
+          console.error(`❌ 刪除 ${team} 打序失敗:`, deleteError.message);
+          return NextResponse.json({ error: `${team} 打序刪除失敗` }, { status: 500 });
+        }
+        
+        // 然後插入新記錄
+        const { error: insertError } = await supabase
+          .from('batting_orders_for_stats')
+          .insert(teamBattingRows);
+        
+        if (insertError) {
+          console.error(`❌ 更新 ${team} 打序失敗:`, insertError.message);
           return NextResponse.json({ error: `${team} 打序更新失敗` }, { status: 500 });
         }
       } else {
@@ -73,16 +84,27 @@ export async function POST(req) {
         console.error(`❌ 查詢 ${pitcher.team} 投手失敗:`, fetchPitcherError.message);
         return NextResponse.json({ error: `查詢 ${pitcher.team} 投手失敗` }, { status: 500 });
       }
-      
-      if (existingPitcher && existingPitcher.length > 0) {
+        if (existingPitcher && existingPitcher.length > 0) {
         console.log(`🔄 更新 ${pitcher.team} 隊先發投手: ${pitcher.pitcher_name}`);
-        // 該隊已有記錄，進行更新
-        const { error: updateError } = await supabase
+        // 該隊已有記錄，先刪除舊記錄
+        const { error: deleteError } = await supabase
           .from('starting_pitchers_for_stats')
-          .upsert(pitcherRow, { onConflict: ['game_id', 'team'] });
+          .delete()
+          .eq('game_id', game_id)
+          .eq('team', pitcher.team);
         
-        if (updateError) {
-          console.error(`❌ 更新 ${pitcher.team} 投手失敗:`, updateError.message);
+        if (deleteError) {
+          console.error(`❌ 刪除 ${pitcher.team} 投手失敗:`, deleteError.message);
+          return NextResponse.json({ error: `${pitcher.team} 投手刪除失敗` }, { status: 500 });
+        }
+        
+        // 然後插入新記錄
+        const { error: insertError } = await supabase
+          .from('starting_pitchers_for_stats')
+          .insert(pitcherRow);
+        
+        if (insertError) {
+          console.error(`❌ 更新 ${pitcher.team} 投手失敗:`, insertError.message);
           return NextResponse.json({ error: `${pitcher.team} 投手更新失敗` }, { status: 500 });
         }
       } else {
