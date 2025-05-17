@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 
 export default function GameRecord({ params }) {
-  const router = useRouter()
   const { gameId } = params
   const [game, setGame] = useState(null)
   const [homeBatters, setHomeBatters] = useState([])
