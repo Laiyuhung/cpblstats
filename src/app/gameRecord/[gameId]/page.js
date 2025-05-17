@@ -255,26 +255,22 @@ export default function GameRecord({ params }) {
                 <span>壘包:</span>
                 <div className="relative w-16 h-16">
                   <div
-                    className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 border ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-4 h-4 border ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
                     onClick={() => setBases(prev => ({ ...prev, second: !prev.second }))
                     }
                   ></div>
                   <div
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-4 border ${bases.home ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                    onClick={() => setBases(prev => ({ ...prev, home: !prev.home }))
-                    }
-                  ></div>
-                  <div
-                    className={`absolute top-1/2 left-0 transform -translate-y-1/2 w-4 h-4 border ${bases.first ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${bases.first ? 'bg-yellow-500' : 'bg-gray-200'}`}
                     onClick={() => setBases(prev => ({ ...prev, first: !prev.first }))
                     }
                   ></div>
                   <div
-                    className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-4 h-4 border ${bases.third ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${bases.third ? 'bg-yellow-500' : 'bg-gray-200'}`}
                     onClick={() => setBases(prev => ({ ...prev, third: !prev.third }))
                     }
                   ></div>
                 </div>
+                <p className="text-xs text-gray-500">壘包狀態: {getBaseCondition()}</p>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <span>出局數:</span>
@@ -287,6 +283,7 @@ export default function GameRecord({ params }) {
                     ></div>
                   ))}
                 </div>
+                <p className="text-xs text-gray-500">出局數: {outs}</p>
               </div>
             </div>
             <div>
@@ -331,10 +328,18 @@ export default function GameRecord({ params }) {
       {/* 右側：單場 log 區域 */}
       <div>
         <h2 className="text-xl font-bold mb-4">單場紀錄</h2>
-        <ul className="list-disc pl-5">
+        <ul className="space-y-2">
           {playByPlay.map((play, index) => (
-            <li key={index}>
-              {`第 ${play.inning} 局 ${play.half_inning}，${play.batter_name} 對 ${play.pitcher_name}，結果：${play.result}，打點：${play.rbis}`}
+            <li key={index} className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="font-semibold">{play.batter_name} vs {play.pitcher_name}</p>
+                <p className="text-sm text-gray-500">壘包: {play.base_condition} | 出局數: {play.out_condition}</p>
+              </div>
+              <div
+                className="px-3 py-1 rounded bg-blue-500 text-white text-sm font-bold"
+              >
+                {play.result}
+              </div>
             </li>
           ))}
         </ul>
