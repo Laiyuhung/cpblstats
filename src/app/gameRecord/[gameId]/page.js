@@ -20,7 +20,7 @@ export default function GameRecord({ params }) {
   const [outs, setOuts] = useState(0)
   const [bases, setBases] = useState({ first: false, second: false, third: false })
   const [isLoading, setIsLoading] = useState(true)
-  const [sequence, setSequence] = useState(1)
+  // const [sequence, setSequence] = useState(1)
   const [rbis, setRbis] = useState(0)
   const [editMode, setEditMode] = useState('state') // 'state' 或 'result'
   const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
