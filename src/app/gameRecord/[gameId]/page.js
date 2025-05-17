@@ -149,7 +149,7 @@ export default function GameRecord({ params }) {
       updateGameState(result)
 
       // 重置回初始模式，設定下一打席的壘包狀態
-      setEditMode('state')
+      // setEditMode('state') // 已移除，不再需要
     } catch (error) {
       console.error('記錄失敗:', error)
       alert('記錄打席時發生錯誤')
