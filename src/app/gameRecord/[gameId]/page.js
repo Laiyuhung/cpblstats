@@ -333,7 +333,27 @@ export default function GameRecord({ params }) {
             <li key={index} className="flex items-center gap-4">
               <div className="flex-1">
                 <p className="font-semibold">{play.batter_name} vs {play.pitcher_name}</p>
-                <p className="text-sm text-gray-500">壘包: {play.base_condition} | 出局數: {play.out_condition}</p>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-16 h-16">
+                    <div
+                      className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    ></div>
+                    <div
+                      className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    ></div>
+                    <div
+                      className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    ></div>
+                  </div>
+                  <div className="flex gap-1">
+                    {[0, 1, 2].map(o => (
+                      <div
+                        key={o}
+                        className={`w-4 h-4 border rounded-full ${play.out_condition > o ? 'bg-red-500' : 'bg-gray-200'}`}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div
                 className="px-3 py-1 rounded bg-blue-500 text-white text-sm font-bold"
