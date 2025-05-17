@@ -126,7 +126,7 @@ export default function GameRecord({ params }) {
       batter_name: currentBatter.name,
       pitcher_name: currentPitcher,
       inning,
-      half_inning: halfInning === 'top' ? '上' : '下',
+      half_inning: halfInning === 'top' ? 'top' : 'bottom',
       result,
       at_bat: atBat, // 使用打序表的打序
       rbis,
@@ -252,59 +252,42 @@ export default function GameRecord({ params }) {
       <h1 className="text-2xl font-bold mb-4">比賽記錄</h1>
 
       <div className="bg-gray-100 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-bold mb-4">Play-by-Play 記錄</h2>
-        <ul className="list-disc pl-5">
-          {playByPlay.map((play, index) => (
-            <li key={index}>
-              {`第 ${play.inning} 局 ${play.half_inning}，${play.batter_name} 對 ${play.pitcher_name}，結果：${play.result}，打點：${play.rbis}`}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="bg-gray-100 p-4 rounded-lg mb-6">
-        <div className="text-xl font-bold mb-2">
-          {game.date} - {awayTeam} @ {homeTeam}
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <h3 className="font-semibold">{awayTeam} 打序</h3>
-            {awayBatters.map((batter, idx) => (
-              <div key={idx} className="flex gap-2 mb-1">
-                <span className="font-bold text-red-500">{batter.order}</span>
-                <span className="w-1/3">{batter.position}</span>
-                <span className="w-2/3">{batter.name}</span>
-              </div>
-            ))}
-            <div className="mt-2">
-              <span className="font-bold text-red-500">P</span>
-              <span className="ml-2">{awayPitcher}</span>
-            </div>
-          </div>
-          <div>
-            <h3 className="font-semibold">{homeTeam} 打序</h3>
-            {homeBatters.map((batter, idx) => (
-              <div key={idx} className="flex gap-2 mb-1">
-                <span className="font-bold text-red-500">{batter.order}</span>
-                <span className="w-1/3">{batter.position}</span>
-                <span className="w-2/3">{batter.name}</span>
-              </div>
-            ))}
-            <div className="mt-2">
-              <span className="font-bold text-red-500">P</span>
-              <span className="ml-2">{homePitcher}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-blue-50 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-bold mb-2">目前狀況</h2>
+        <h2 className="text-xl font-bold mb-4">目前狀況</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <p className="font-semibold">第 {inning} 局 {halfInning === 'top' ? '上' : '下'}</p>
-            <p>出局數: {outs}</p>
-            <p>壘包: {bases.first ? '一' : ''}{bases.second ? '二' : ''}{bases.third ? '三' : ''}壘 {!bases.first && !bases.second && !bases.third && '無人'}</p>
+            <div className="flex items-center gap-2">
+              <span>壘包:</span>
+              <div className="flex gap-1">
+                <div
+                  className={`w-6 h-6 border rounded-full ${bases.first ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                  onClick={() => setBases(prev => ({ ...prev, first: !prev.first }))
+                  }
+                ></div>
+                <div
+                  className={`w-6 h-6 border rounded-full ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                  onClick={() => setBases(prev => ({ ...prev, second: !prev.second }))
+                  }
+                ></div>
+                <div
+                  className={`w-6 h-6 border rounded-full ${bases.third ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                  onClick={() => setBases(prev => ({ ...prev, third: !prev.third }))
+                  }
+                ></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span>出局數:</span>
+              <div className="flex gap-1">
+                {[0, 1, 2].map(o => (
+                  <div
+                    key={o}
+                    className={`w-6 h-6 border rounded-full ${outs > o ? 'bg-red-500' : 'bg-gray-200'}`}
+                    onClick={() => setOuts(o + 1)}
+                  ></div>
+                ))}
+              </div>
+            </div>
           </div>
           <div>
             <p className="font-semibold">目前打者: {currentBatter?.name || '未設定'}</p>
@@ -315,131 +298,35 @@ export default function GameRecord({ params }) {
         </div>
       </div>
 
-      {editMode === 'state' ? (
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-xl font-bold mb-4">設定打擊前狀態</h2>
-          
-          <div className="mb-4">
-            <h3 className="font-semibold mb-2">出局數</h3>
-            <div className="flex gap-2 mb-4">
-              {[0, 1, 2].map(o => (
-                <button
-                  key={o}
-                  className={`border px-4 py-2 rounded ${outs === o ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                  onClick={() => setOuts(o)}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <h3 className="font-semibold mb-2">壘包狀態</h3>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <h4 className="text-sm mb-1">一壘</h4>
-                <div className="flex gap-2">
-                  <button
-                    className={`border px-4 py-2 rounded ${bases.first ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, first: true }))}
-                  >
-                    有人
-                  </button>
-                  <button
-                    className={`border px-4 py-2 rounded ${!bases.first ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, first: false }))}
-                  >
-                    無人
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm mb-1">二壘</h4>
-                <div className="flex gap-2">
-                  <button
-                    className={`border px-4 py-2 rounded ${bases.second ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, second: true }))}
-                  >
-                    有人
-                  </button>
-                  <button
-                    className={`border px-4 py-2 rounded ${!bases.second ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, second: false }))}
-                  >
-                    無人
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm mb-1">三壘</h4>
-                <div className="flex gap-2">
-                  <button
-                    className={`border px-4 py-2 rounded ${bases.third ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, third: true }))}
-                  >
-                    有人
-                  </button>
-                  <button
-                    className={`border px-4 py-2 rounded ${!bases.third ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                    onClick={() => setBases(prev => ({ ...prev, third: false }))}
-                  >
-                    無人
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <button 
-            className="bg-green-600 text-white px-4 py-2 rounded"
-            onClick={() => setEditMode('result')}
+      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+        <h2 className="text-xl font-bold mb-4">記錄打擊結果</h2>
+        <div className="mb-4">
+          <label htmlFor="result" className="block font-semibold mb-2">打擊結果</label>
+          <select
+            id="result"
+            className="w-full border rounded p-2"
+            onChange={e => handleRecordAtBat(e.target.value)}
           >
-            下一步：記錄打擊結果
-          </button>
-        </div>
-      ) : (
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-xl font-bold mb-4">記錄打擊結果</h2>
-          
-          <div className="mb-4">
-            <h3 className="font-semibold mb-2">打點 (RBI): {rbis}</h3>
-            <div className="flex gap-2 mb-3">
-              {[0, 1, 2, 3, 4].map(rbi => (
-                <button
-                  key={rbi}
-                  className={`border px-4 py-2 rounded ${rbis === rbi ? 'bg-blue-500 text-white' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
-                  onClick={() => setRbis(rbi)}
-                >
-                  {rbi}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2 mb-4">
+            <option value="">選擇結果</option>
             {resultOptions.map(option => (
-              <button
-                key={option.value}
-                className="bg-white border border-gray-300 p-2 rounded hover:bg-gray-100"
-                onClick={() => handleRecordAtBat(option.value)}
-              >
-                {option.label} ({option.value})
-              </button>
+              <option key={option.value} value={option.value}>{option.label}</option>
             ))}
-          </div>
-          
-          <button 
-            className="bg-yellow-600 text-white px-4 py-2 rounded"
-            onClick={() => setEditMode('state')}
-          >
-            返回：修改壘包狀態
-          </button>
+          </select>
         </div>
-      )}
-      
+        <div className="mb-4">
+          <label htmlFor="rbis" className="block font-semibold mb-2">打點 (RBI)</label>
+          <select
+            id="rbis"
+            className="w-full border rounded p-2"
+            onChange={e => setRbis(Number(e.target.value))}
+          >
+            {[0, 1, 2, 3, 4].map(rbi => (
+              <option key={rbi} value={rbi}>{rbi}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <button
         className="bg-red-600 text-white px-4 py-2 rounded"
         onClick={() => router.push('/gameLog')}
