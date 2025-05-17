@@ -242,91 +242,104 @@ export default function GameRecord({ params }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">比賽記錄</h1>
+    <div className="max-w-6xl mx-auto p-4 grid grid-cols-2 gap-4">
+      {/* 左側：紀錄區域 */}
+      <div>
+        <h1 className="text-2xl font-bold mb-4">比賽記錄</h1>
 
-      <div className="bg-gray-100 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-bold mb-4">目前狀況</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <p className="font-semibold">第 {inning} 局 {halfInning === 'top' ? '上' : '下'}</p>
-            <div className="flex items-center gap-2">
-              <span>壘包:</span>
-              <div className="flex gap-1">
-                <div
-                  className={`w-6 h-6 border rounded-full ${bases.first ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                  onClick={() => setBases(prev => ({ ...prev, first: !prev.first }))
-                  }
-                ></div>
-                <div
-                  className={`w-6 h-6 border rounded-full ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                  onClick={() => setBases(prev => ({ ...prev, second: !prev.second }))
-                  }
-                ></div>
-                <div
-                  className={`w-6 h-6 border rounded-full ${bases.third ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                  onClick={() => setBases(prev => ({ ...prev, third: !prev.third }))
-                  }
-                ></div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <span>出局數:</span>
-              <div className="flex gap-1">
-                {[0, 1, 2].map(o => (
+        <div className="bg-gray-100 p-4 rounded-lg mb-6">
+          <h2 className="text-xl font-bold mb-4">目前狀況</h2>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="font-semibold">第 {inning} 局 {halfInning === 'top' ? '上' : '下'}</p>
+              <div className="flex items-center gap-2">
+                <span>壘包:</span>
+                <div className="relative w-16 h-16">
                   <div
-                    key={o}
-                    className={`w-6 h-6 border rounded-full ${outs > o ? 'bg-red-500' : 'bg-gray-200'}`}
-                    onClick={() => setOuts(o + 1)}
+                    className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-4 h-4 border ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    onClick={() => setBases(prev => ({ ...prev, second: !prev.second }))
+                    }
                   ></div>
-                ))}
+                  <div
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-4 border ${bases.home ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    onClick={() => setBases(prev => ({ ...prev, home: !prev.home }))
+                    }
+                  ></div>
+                  <div
+                    className={`absolute top-1/2 left-0 transform -translate-y-1/2 w-4 h-4 border ${bases.first ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    onClick={() => setBases(prev => ({ ...prev, first: !prev.first }))
+                    }
+                  ></div>
+                  <div
+                    className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-4 h-4 border ${bases.third ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                    onClick={() => setBases(prev => ({ ...prev, third: !prev.third }))
+                    }
+                  ></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span>出局數:</span>
+                <div className="flex gap-1">
+                  {[0, 1, 2].map(o => (
+                    <div
+                      key={o}
+                      className={`w-6 h-6 border rounded-full ${outs > o ? 'bg-red-500' : 'bg-gray-200'}`}
+                      onClick={() => setOuts(o + 1)}
+                    ></div>
+                  ))}
+                </div>
               </div>
             </div>
+            <div>
+              <p className="font-semibold">目前打者: {currentBatter?.name || '未設定'}</p>
+              <p>打序位置: {currentBatter?.order || '-'}</p>
+              <p>守備位置: {currentBatter?.position || '-'}</p>
+              <p>投手: {currentPitcher || '未設定'}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold">目前打者: {currentBatter?.name || '未設定'}</p>
-            <p>打序位置: {currentBatter?.order || '-'}</p>
-            <p>守備位置: {currentBatter?.position || '-'}</p>
-            <p>投手: {currentPitcher || '未設定'}</p>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h2 className="text-xl font-bold mb-4">記錄打擊結果</h2>
+          <div className="mb-4">
+            <label htmlFor="result" className="block font-semibold mb-2">打擊結果</label>
+            <select
+              id="result"
+              className="w-full border rounded p-2"
+              onChange={e => handleRecordAtBat(e.target.value)}
+            >
+              <option value="">選擇結果</option>
+              {resultOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="rbis" className="block font-semibold mb-2">打點 (RBI)</label>
+            <select
+              id="rbis"
+              className="w-full border rounded p-2"
+              onChange={e => setRbis(Number(e.target.value))}
+            >
+              {[0, 1, 2, 3, 4].map(rbi => (
+                <option key={rbi} value={rbi}>{rbi}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
-        <h2 className="text-xl font-bold mb-4">記錄打擊結果</h2>
-        <div className="mb-4">
-          <label htmlFor="result" className="block font-semibold mb-2">打擊結果</label>
-          <select
-            id="result"
-            className="w-full border rounded p-2"
-            onChange={e => handleRecordAtBat(e.target.value)}
-          >
-            <option value="">選擇結果</option>
-            {resultOptions.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="rbis" className="block font-semibold mb-2">打點 (RBI)</label>
-          <select
-            id="rbis"
-            className="w-full border rounded p-2"
-            onChange={e => setRbis(Number(e.target.value))}
-          >
-            {[0, 1, 2, 3, 4].map(rbi => (
-              <option key={rbi} value={rbi}>{rbi}</option>
-            ))}
-          </select>
-        </div>
+      {/* 右側：單場 log 區域 */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">單場紀錄</h2>
+        <ul className="list-disc pl-5">
+          {playByPlay.map((play, index) => (
+            <li key={index}>
+              {`第 ${play.inning} 局 ${play.half_inning}，${play.batter_name} 對 ${play.pitcher_name}，結果：${play.result}，打點：${play.rbis}`}
+            </li>
+          ))}
+        </ul>
       </div>
-
-      <button
-        className="bg-red-600 text-white px-4 py-2 rounded"
-        onClick={() => router.push('/gameLog')}
-      >
-        返回
-      </button>
     </div>
   )
 }
