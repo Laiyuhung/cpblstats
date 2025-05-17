@@ -115,6 +115,12 @@ export default function GameRecord({ params }) {
   const handleRecordAtBat = async (result) => {
     if (!currentBatter || !currentPitcher) return
 
+    // 計算 at_bat 為當前打者的打序
+    const atBat = currentBatter?.order || 0
+
+    // 計算 sequence 為歷史記錄的最大值加 1
+    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1
+
     const atBatData = {
       game_no: Number(gameId),
       batter_name: currentBatter.name,
@@ -122,9 +128,9 @@ export default function GameRecord({ params }) {
       inning,
       half_inning: halfInning === 'top' ? '上' : '下',
       result,
-      at_bat: `${inning}-${halfInning}-${sequence}`, // 基於局數、半局和打席順序計算 at_bat
+      at_bat: atBat, // 使用打序表的打序
       rbis,
-      sequence,
+      sequence: newSequence, // 使用歷史記錄最大值加 1
       base_condition: getBaseCondition(),
       out_condition: outs
     }
@@ -143,8 +149,7 @@ export default function GameRecord({ params }) {
       // 更新 Play-by-Play 記錄
       setPlayByPlay(prev => [...prev, atBatData])
 
-      // 更新計數
-      setSequence(seq => seq + 1)
+      // 重置打點計數
       setRbis(0)
 
       // 更新壘包狀態、出局數、換邊等邏輯
