@@ -7,8 +7,6 @@ export default function GameRecord({ params }) {
   const router = useRouter()
   const { gameId } = params
   const [game, setGame] = useState(null)
-  const [homeTeam, setHomeTeam] = useState('')
-  const [awayTeam, setAwayTeam] = useState('')
   const [homeBatters, setHomeBatters] = useState([])
   const [awayBatters, setAwayBatters] = useState([])
   const [homePitcher, setHomePitcher] = useState('')
@@ -20,9 +18,7 @@ export default function GameRecord({ params }) {
   const [outs, setOuts] = useState(0)
   const [bases, setBases] = useState({ first: false, second: false, third: false })
   const [isLoading, setIsLoading] = useState(true)
-  // const [sequence, setSequence] = useState(1)
   const [rbis, setRbis] = useState(0)
-  const [editMode, setEditMode] = useState('state') // 'state' 或 'result'
   const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
 
   const resultOptions = [
@@ -63,8 +59,6 @@ export default function GameRecord({ params }) {
             if (gameData && gameData.length > 0) {
               const currentGame = gameData[0]
               setGame(currentGame)
-              setHomeTeam(currentGame.home)
-              setAwayTeam(currentGame.away)
               
               // 解析打序
               const homeBattersData = data.battingOrders
