@@ -102,6 +102,19 @@ export default function GameRecord({ params }) {
       })
   }, [gameId])
 
+  const groupPlaysByInning = (plays) => {
+    const groups = {};
+
+    plays.forEach(play => {
+      const label = `${play.inning}${play.half_inning === 'top' ? '上' : '下'}`;
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(play);
+    });
+
+    return groups;
+  };
+
+
   const getBaseCondition = () => {
     const { first, second, third } = bases
     if (!first && !second && !third) return '無人'
@@ -253,7 +266,7 @@ export default function GameRecord({ params }) {
           <h2 className="text-xl font-bold mb-4">目前狀況</h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="font-semibold">{halfInning} {inning} </p>
+              <p className="font-semibold">{halfInning === 'top' ? 'Top' : 'Bot'} {inning} </p>
               <div className="flex items-center gap-2">
                 <span>壘包:</span>
                 <div className="relative w-16 h-16">
@@ -273,7 +286,7 @@ export default function GameRecord({ params }) {
                     }
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500">壘包狀態: {getBaseCondition()}</p>
+                {/* <p className="text-xs text-gray-500">壘包狀態: {getBaseCondition()}</p> */}
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <span>出局數:</span>
@@ -286,7 +299,7 @@ export default function GameRecord({ params }) {
                     ></div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500">出局數: {outs}</p>
+                {/* <p className="text-xs text-gray-500">出局數: {outs}</p> */}
               </div>
             </div>
             <div className="space-y-1">
@@ -341,52 +354,62 @@ export default function GameRecord({ params }) {
         <h2 className="text-xl font-bold mb-4">單場紀錄</h2>
         <ul className="space-y-2">
           <ul className="space-y-4">
-            {playByPlay.map((play, index) => {
-              const base = play.base_condition || '';
-              const out = play.out_condition || 0;
-              const result = play.result;
+            {Object.entries(groupPlaysByInning(playByPlay)).map(([inningLabel, plays]) => (
+              <div key={inningLabel} className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold">{inningLabel}</h3>
+                  <div className="h-px flex-1 bg-gray-300"></div>
+                </div>
+                <ul className="space-y-2">
+                  {plays.map((play, index) => {
+                    const base = play.base_condition || '';
+                    const out = play.out_condition || 0;
+                    const result = play.result;
 
-              const getResultColor = (type) => {
-                if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O'].includes(type)) return '#1E3A8A';
-                if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) return 'bg-red-600';
-                if (['BB', 'IBB', 'HBP', 'SF', 'SAC', 'INT-D'].includes(type)) return 'bg-[#CA8A04]';
-                return 'bg-gray-600';
-              };
+                    const getResultColor = (type) => {
+                      if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O'].includes(type)) return 'bg-[#1E3A8A]';
+                      if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) return 'bg-green-600';
+                      if (['BB', 'IBB', 'HBP', 'SAC', 'INT-D'].includes(type)) return 'bg-[#CA8A04]';
+                      if (['DP', 'TP'].includes(type)) return 'bg-red-600';
+                      return 'bg-gray-600';
+                    };
 
-              return (
-                <li key={index} className="flex items-start gap-4">
-                  {/* 中：打者與投手 */}
-                  <div className="flex-1">
-                    <p className="text-lg font-bold">{play.batter_name}</p>
-                    <p className="text-sm text-gray-600">{play.pitcher_name}</p>
-                  </div>
-                  
-                  {/* 左：壘包與出局數 */}
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-12 h-12 mb-2">
-                      <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
-                      <div className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
-                      <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
-                    </div>
-                    <div className="flex gap-1">
-                      {[0, 1].map(o => (
-                        <div
-                          key={o}
-                          className={`w-3 h-3 border rounded-full ${out > o ? 'bg-red-500' : 'bg-gray-200'}`}
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
+                    return (
+                      <li key={index} className="flex items-center gap-4">
+                        {/* 打者與投手 */}
+                        <div className="flex-1">
+                          <p className="text-lg font-bold">{play.batter_name}</p>
+                          <p className="text-sm text-gray-600">投手：{play.pitcher_name}</p>
+                        </div>
 
-                  
+                        {/* 壘包與出局數 */}
+                        <div className="flex flex-col items-center">
+                          <div className="relative w-12 h-12 mb-2">
+                            <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                            <div className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                            <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                          </div>
+                          <div className="flex gap-1">
+                            {[0, 1].map(o => (
+                              <div
+                                key={o}
+                                className={`w-3 h-3 border rounded-full ${out > o ? 'bg-red-500' : 'bg-gray-200'}`}
+                              ></div>
+                            ))}
+                          </div>
+                        </div>
 
-                  {/* 右：打擊結果 */}
-                  <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
-                    {result}
-                  </div>
-                </li>
-              );
-            })}
+                        {/* 打擊結果 */}
+                        <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
+                          {result}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+
           </ul>
 
         </ul>
