@@ -355,6 +355,12 @@ export default function GameRecord({ params }) {
 
               return (
                 <li key={index} className="flex items-start gap-4">
+                  {/* 中：打者與投手 */}
+                  <div className="flex-1">
+                    <p className="text-lg font-bold">{play.batter_name}</p>
+                    <p className="text-sm text-gray-600">{play.pitcher_name}</p>
+                  </div>
+                  
                   {/* 左：壘包與出局數 */}
                   <div className="flex flex-col items-center">
                     <div className="relative w-12 h-12 mb-2">
@@ -363,7 +369,7 @@ export default function GameRecord({ params }) {
                       <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
                     </div>
                     <div className="flex gap-1">
-                      {[0, 1, 2].map(o => (
+                      {[0, 1].map(o => (
                         <div
                           key={o}
                           className={`w-3 h-3 border rounded-full ${out > o ? 'bg-red-500' : 'bg-gray-200'}`}
@@ -372,11 +378,7 @@ export default function GameRecord({ params }) {
                     </div>
                   </div>
 
-                  {/* 中：打者與投手 */}
-                  <div className="flex-1">
-                    <p className="text-lg font-bold">{play.batter_name}</p>
-                    <p className="text-sm text-gray-600">{play.pitcher_name}</p>
-                  </div>
+                  
 
                   {/* 右：打擊結果 */}
                   <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
