@@ -250,7 +250,7 @@ export default function GameRecord({ params }) {
           <h2 className="text-xl font-bold mb-4">目前狀況</h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="font-semibold">第 {inning} 局 {halfInning === 'top' ? '上' : '下'}</p>
+              <p className="font-semibold">{halfInning} {inning} </p>
               <div className="flex items-center gap-2">
                 <span>壘包:</span>
                 <div className="relative w-16 h-16">
