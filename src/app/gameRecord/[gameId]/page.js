@@ -390,8 +390,22 @@ export default function GameRecord({ params }) {
                         {/* 中：壘包與出局 */}
                         <div className="w-1/3 flex flex-col items-center justify-center">
                           <div className="relative w-12 h-12 mb-2">
-                            {/* 三個壘包 */}
+                            {/* 二壘 */}
+                            <div
+                              className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                            ></div>
+
+                            {/* 一壘 */}
+                            <div
+                              className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                            ></div>
+
+                            {/* 三壘 */}
+                            <div
+                              className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                            ></div>
                           </div>
+
                           <div className="flex gap-1">
                             {[0, 1].map(o => (
                               <div
