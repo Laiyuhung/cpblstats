@@ -172,6 +172,30 @@ export default function GameRecord({ params }) {
     }
   }
 
+  const handleRunnerOut = () => {
+    const newOuts = outs + 1;
+
+    setOuts(newOuts);
+
+    if (newOuts >= 3) {
+      // 換局：清空壘包與出局數
+      setOuts(0);
+      setBases({ first: false, second: false, third: false });
+
+      if (halfInning === 'top') {
+        setHalfInning('bottom');
+        setCurrentBatter(homeBatters[0]);
+        setCurrentPitcher(awayPitcher);
+      } else {
+        setHalfInning('top');
+        setInning(prev => prev + 1);
+        setCurrentBatter(awayBatters[0]);
+        setCurrentPitcher(homePitcher);
+      }
+    }
+  };
+
+
   // 根據打擊結果更新比賽狀態
   const updateGameState = (result) => {
     // 處理出局數變化
@@ -291,13 +315,21 @@ export default function GameRecord({ params }) {
               <div className="flex items-center gap-2 mt-2">
                 <span>出局數:</span>
                 <div className="flex gap-1">
-                  {[0, 1, 2].map(o => (
+                  {[0, 1].map(o => (
                     <div
                       key={o}
                       className={`w-6 h-6 border rounded-full ${outs > o ? 'bg-red-500' : 'bg-gray-200'}`}
                       onClick={() => setOuts(o + 1)}
                     ></div>
                   ))}
+                </div>
+                <div className="mt-2">
+                  <button
+                    className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded"
+                    onClick={handleRunnerOut}
+                  >
+                    壘間出局 +1
+                  </button>
                 </div>
                 {/* <p className="text-xs text-gray-500">出局數: {outs}</p> */}
               </div>
@@ -339,6 +371,7 @@ export default function GameRecord({ params }) {
               ))}
             </select>
           </div>
+          
           <button
             className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
             onClick={() => handleRecordAtBat(selectedResult)}
@@ -383,8 +416,8 @@ export default function GameRecord({ params }) {
                       <li key={index} className="flex justify-between items-center gap-4">
                         {/* 左：打者與投手資訊 */}
                         <div className="w-1/3">
-                          <p className="text-lg font-bold text-right">{play.batter_name}</p>
-                          <p className="text-sm text-gray-600 text-right">投手：{play.pitcher_name}</p>
+                          <p className="text-lg font-bold text-left">{play.batter_name}</p>
+                          <p className="text-sm text-gray-600 text-left">投手：{play.pitcher_name}</p>
                         </div>
 
                         {/* 中：壘包與出局數 */}
