@@ -19,6 +19,8 @@ export default function GameRecord({ params }) {
   const [isLoading, setIsLoading] = useState(true)
   const [rbis, setRbis] = useState(0)
   const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
+  const [selectedResult, setSelectedResult] = useState('');
+
 
   const resultOptions = [
     { value: 'IH', label: '內野安打' },
@@ -147,6 +149,7 @@ export default function GameRecord({ params }) {
 
       // 更新壘包狀態、出局數、換邊等邏輯
       updateGameState(result)
+      setSelectedResult('');
 
       // 重置回初始模式，設定下一打席的壘包狀態
       // setEditMode('state') // 已移除，不再需要
@@ -302,7 +305,8 @@ export default function GameRecord({ params }) {
             <select
               id="result"
               className="w-full border rounded p-2"
-              onChange={e => handleRecordAtBat(e.target.value)}
+              value={selectedResult}
+              onChange={e => setSelectedResult(e.target.value)}
             >
               <option value="">選擇結果</option>
               {resultOptions.map(option => (
@@ -322,6 +326,13 @@ export default function GameRecord({ params }) {
               ))}
             </select>
           </div>
+          <button
+            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+            onClick={() => handleRecordAtBat(selectedResult)}
+            disabled={!selectedResult}
+          >
+            送出
+          </button>
         </div>
       </div>
 
@@ -329,39 +340,53 @@ export default function GameRecord({ params }) {
       <div>
         <h2 className="text-xl font-bold mb-4">單場紀錄</h2>
         <ul className="space-y-2">
-          {playByPlay.map((play, index) => (
-            <li key={index} className="flex items-center gap-4">
-              <div className="flex-1">
-                <p className="font-semibold">{play.batter_name} vs {play.pitcher_name}</p>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-16 h-16">
-                    <div
-                      className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                    ></div>
-                    <div
-                      className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                    ></div>
-                    <div
-                      className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-4 h-4 border ${play.base_condition.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}
-                    ></div>
+          <ul className="space-y-4">
+            {playByPlay.map((play, index) => {
+              const base = play.base_condition || '';
+              const out = play.out_condition || 0;
+              const result = play.result;
+
+              const getResultColor = (type) => {
+                if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O'].includes(type)) return '#1E3A8A';
+                if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) return 'bg-red-600';
+                if (['BB', 'IBB', 'HBP', 'SF', 'SAC', 'INT-D'].includes(type)) return 'bg-[#CA8A04]';
+                return 'bg-gray-600';
+              };
+
+              return (
+                <li key={index} className="flex items-start gap-4">
+                  {/* 左：壘包與出局數 */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-12 h-12 mb-2">
+                      <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                      <div className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                      <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                    </div>
+                    <div className="flex gap-1">
+                      {[0, 1, 2].map(o => (
+                        <div
+                          key={o}
+                          className={`w-3 h-3 border rounded-full ${out > o ? 'bg-red-500' : 'bg-gray-200'}`}
+                        ></div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    {[0, 1, 2].map(o => (
-                      <div
-                        key={o}
-                        className={`w-4 h-4 border rounded-full ${play.out_condition > o ? 'bg-red-500' : 'bg-gray-200'}`}
-                      ></div>
-                    ))}
+
+                  {/* 中：打者與投手 */}
+                  <div className="flex-1">
+                    <p className="text-lg font-bold">{play.batter_name}</p>
+                    <p className="text-sm text-gray-600">{play.pitcher_name}</p>
                   </div>
-                </div>
-              </div>
-              <div
-                className="px-3 py-1 rounded bg-blue-500 text-white text-sm font-bold"
-              >
-                {play.result}
-              </div>
-            </li>
-          ))}
+
+                  {/* 右：打擊結果 */}
+                  <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
+                    {result}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
         </ul>
       </div>
     </div>
