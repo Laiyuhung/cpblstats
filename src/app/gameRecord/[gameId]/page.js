@@ -380,19 +380,17 @@ export default function GameRecord({ params }) {
                     };
 
                     return (
-                      <li key={index} className="flex items-center gap-4">
-                        {/* 打者與投手 */}
-                        <div className="flex-1">
-                          <p className="text-lg font-bold">{play.batter_name}</p>
-                          <p className="text-sm text-gray-600">投手：{play.pitcher_name}</p>
+                      <li className="flex justify-between items-center gap-2">
+                        {/* 左：打者 */}
+                        <div className="w-1/3">
+                          <p className="text-lg font-bold text-right">{play.batter_name}</p>
+                          <p className="text-sm text-gray-600 text-right">投手：{play.pitcher_name}</p>
                         </div>
 
-                        {/* 壘包與出局數 */}
-                        <div className="flex flex-col items-center">
+                        {/* 中：壘包與出局 */}
+                        <div className="w-1/3 flex flex-col items-center justify-center">
                           <div className="relative w-12 h-12 mb-2">
-                            <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('二') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
-                            <div className={`absolute top-1/2 right-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('一') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
-                            <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 rotate-45 w-3.5 h-3.5 border ${base.includes('三') ? 'bg-yellow-500' : 'bg-gray-200'}`}></div>
+                            {/* 三個壘包 */}
                           </div>
                           <div className="flex gap-1">
                             {[0, 1].map(o => (
@@ -404,9 +402,11 @@ export default function GameRecord({ params }) {
                           </div>
                         </div>
 
-                        {/* 打擊結果 */}
-                        <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
-                          {result}
+                        {/* 右：結果 */}
+                        <div className="w-1/3 flex justify-start">
+                          <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
+                            {result}
+                          </div>
                         </div>
                       </li>
                     );
