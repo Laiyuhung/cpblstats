@@ -367,11 +367,16 @@ export default function GameRecord({ params }) {
                     const result = play.result;
 
                     const getResultColor = (type) => {
-                      if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O'].includes(type)) return 'bg-[#1E3A8A]';
-                      if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) return 'bg-green-600';
-                      if (['BB', 'IBB', 'HBP', 'SAC', 'INT-D'].includes(type)) return 'bg-[#CA8A04]';
-                      if (['DP', 'TP'].includes(type)) return 'bg-red-600';
-                      return 'bg-gray-600';
+                      if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O', 'DP', 'TP'].includes(type)) {
+                        return 'bg-[#1E3A8A]'; // 深藍 - 出局類
+                      }
+                      if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) {
+                        return 'bg-[#DC2626]'; // 紅色 - 安打類
+                      }
+                      if (['BB', 'IBB', 'HBP', 'SAC', 'INT-D'].includes(type)) {
+                        return 'bg-[#CA8A04]'; // 土黃 - 保送類
+                      }
+                      return 'bg-gray-600'; // 其他
                     };
 
                     return (
