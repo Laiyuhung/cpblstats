@@ -286,11 +286,11 @@ export default function GameRecord({ params }) {
                 <p className="text-xs text-gray-500">出局數: {outs}</p>
               </div>
             </div>
-            <div>
-              <p className="font-semibold">目前打者: {currentBatter?.name || '未設定'}</p>
-              <p>打序位置: {currentBatter?.order || '-'}</p>
-              <p>守備位置: {currentBatter?.position || '-'}</p>
-              <p>投手: {currentPitcher || '未設定'}</p>
+            <div className="space-y-1">
+              <p className="font-semibold text-lg">
+                第 {currentBatter?.order || '-'} 棒 {currentBatter?.position?.toUpperCase() || '-'}  {currentBatter?.name || '未設定'}
+              </p>
+              <p className="text-gray-600">投手：{currentPitcher || '未設定'}</p>
             </div>
           </div>
         </div>
