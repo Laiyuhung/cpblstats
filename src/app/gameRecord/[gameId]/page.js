@@ -50,18 +50,34 @@ export default function GameRecord({ params }) {
     if (!gameId) return
 
     // 嘗試讀取該場記分板
-    fetch(`/api/scoreboard?game_id=${gameId}`)
+    fetch(`/api/scoreboard/${gameId}`)
       .then(res => res.json())
       .then(async (data) => {
-        if (!data || Object.keys(data).length === 0) {
-          // 如果沒有，則建立
-          const createRes = await fetch('/api/scoreboard', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ game_id: gameId })
-          })
-          const created = await createRes.json()
-          setScoreboard(created)
+        if (!data || data.length === 0) {
+          // 若無記分板，建立 home 與 away 各一筆
+          const gameRes = await fetch(`/api/games?game_id=${gameId}`)
+          const gameData = await gameRes.json()
+          const game = gameData[0]
+
+          if (game) {
+            await Promise.all([
+              fetch(`/api/scoreboard/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_type: 'home', team_name: game.home })
+              }),
+              fetch(`/api/scoreboard/${gameId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_type: 'away', team_name: game.away })
+              })
+            ])
+
+            // 重新抓取
+            const reloadRes = await fetch(`/api/scoreboard/${gameId}`)
+            const reloadData = await reloadRes.json()
+            setScoreboard(reloadData)
+          }
         } else {
           setScoreboard(data)
         }
@@ -70,6 +86,7 @@ export default function GameRecord({ params }) {
         console.error('❌ 無法讀取或建立記分板:', err)
       })
   }, [gameId])
+
 
 
   useEffect(() => {
