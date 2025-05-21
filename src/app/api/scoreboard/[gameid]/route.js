@@ -4,21 +4,25 @@ import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 
 // 讀取記分板
-export async function GET(req, { params }) {
-  const gameId = params.game_id
+export async function GET(req, context) {
+  const gameId = context?.params?.game_id;
+  if (!gameId) {
+    return NextResponse.json({ error: '缺少 game_id' }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from('game_scoreboards_for_stats')
     .select('*')
     .eq('game_no', gameId)
-    .order('team_type', { ascending: true })
+    .order('team_type', { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data);
 }
+
 
 // 更新記分板
 export async function PUT(req, { params }) {
