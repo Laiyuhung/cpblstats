@@ -309,9 +309,9 @@ export default function GameRecord({ params }) {
           <h2 className="text-xl font-bold mb-4">目前狀況</h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="font-semibold">{halfInning === 'top' ? 'Top' : 'Bot'} {inning} </p>
+              <p className="font-semibold text-2xl">{halfInning === 'top' ? 'Top' : 'Bot'} {inning}</p>
               <div className="flex items-center gap-2">
-                <span>壘包:</span>
+                <span>壘位:</span>
                 <div className="relative w-16 h-16">
                   <div
                     className={`absolute top-0 left-1/2 transform -translate-x-1/2 rotate-45 w-4 h-4 border ${bases.second ? 'bg-yellow-500' : 'bg-gray-200'}`}
@@ -457,10 +457,15 @@ export default function GameRecord({ params }) {
                         </div>
 
                         {/* 右：打擊結果 */}
-                        <div className="w-1/3 flex justify-start">
+                        <div className="w-1/3 flex flex-col items-end">
                           <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
                             {result}
                           </div>
+                          {play.rbis > 0 && (
+                            <div className="mt-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                              打點 +{play.rbis}
+                            </div>
+                          )}
                         </div>
                       </li>
 
