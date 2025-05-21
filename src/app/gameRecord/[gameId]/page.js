@@ -102,6 +102,25 @@ export default function GameRecord({ params }) {
       })
   }, [gameId])
 
+  useEffect(() => {
+    if (!gameId) return
+
+    fetch(`/api/atbat-log?game_id=${gameId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPlayByPlay(data)
+          console.log('📋 載入逐打席紀錄:', data)
+        } else {
+          console.warn('⚠️ 無法讀取打席紀錄:', data)
+        }
+      })
+      .catch(err => {
+        console.error('❌ 無法讀取逐打席紀錄:', err)
+      })
+  }, [gameId])
+
+
   const groupPlaysByInning = (plays) => {
     const groups = {};
 
