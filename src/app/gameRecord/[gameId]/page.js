@@ -20,6 +20,7 @@ export default function GameRecord({ params }) {
   const [rbis, setRbis] = useState(0)
   const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
   const [selectedResult, setSelectedResult] = useState('');
+  const [scoreboard, setScoreboard] = useState(null)
 
 
   const resultOptions = [
@@ -44,6 +45,32 @@ export default function GameRecord({ params }) {
     { value: 'INT-O', label: '妨礙守備' },
     { value: 'INT-D', label: '妨礙打擊' },
   ]
+
+  useEffect(() => {
+    if (!gameId) return
+
+    // 嘗試讀取該場記分板
+    fetch(`/api/scoreboard?game_id=${gameId}`)
+      .then(res => res.json())
+      .then(async (data) => {
+        if (!data || Object.keys(data).length === 0) {
+          // 如果沒有，則建立
+          const createRes = await fetch('/api/scoreboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ game_id: gameId })
+          })
+          const created = await createRes.json()
+          setScoreboard(created)
+        } else {
+          setScoreboard(data)
+        }
+      })
+      .catch(err => {
+        console.error('❌ 無法讀取或建立記分板:', err)
+      })
+  }, [gameId])
+
 
   useEffect(() => {
     if (!gameId) return
@@ -300,6 +327,48 @@ export default function GameRecord({ params }) {
   }
 
   return (
+
+    <>
+    <div className="max-w-6xl mx-auto p-4">
+      <h2 className="text-2xl font-bold mb-2">記分板</h2>
+      {scoreboard ? (
+        <div className="overflow-x-auto">
+          <table className="table-auto border border-gray-300 w-full text-sm">
+            <thead>
+              <tr>
+                <th className="border px-2 py-1">隊伍</th>
+                {[...Array(15)].map((_, i) => (
+                  <th key={i} className="border px-2 py-1">{i + 1}</th>
+                ))}
+                <th className="border px-2 py-1">R</th>
+                <th className="border px-2 py-1">H</th>
+                <th className="border px-2 py-1">E</th>
+              </tr>
+            </thead>
+            <tbody>
+              {['away', 'home'].map(team => (
+                <tr key={team}>
+                  <td className="border px-2 py-1 font-bold">{scoreboard[`${team}_team`]}</td>
+                  {[...Array(15)].map((_, i) => (
+                    <td key={i} className="border px-2 py-1 text-center">
+                      {scoreboard[`${team}_scores`]?.[i] ?? ''}
+                    </td>
+                  ))}
+                  <td className="border px-2 py-1">{scoreboard[`${team}_R`]}</td>
+                  <td className="border px-2 py-1">{scoreboard[`${team}_H`]}</td>
+                  <td className="border px-2 py-1">{scoreboard[`${team}_E`]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p>載入記分板中...</p>
+      )}
+    </div>
+
+
+
     <div className="max-w-6xl mx-auto p-4 grid grid-cols-2 gap-4">
       {/* 左側：紀錄區域 */}
       <div>
@@ -480,5 +549,6 @@ export default function GameRecord({ params }) {
         </ul>
       </div>
     </div>
+    </>
   )
 }
