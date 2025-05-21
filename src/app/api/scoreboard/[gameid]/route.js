@@ -1,7 +1,7 @@
 // /app/api/scoreboard/[game_id]/route.js
 
 import { NextResponse } from 'next/server'
-import supabase from '@/lib/supabaseServer'
+import supabase from '@/lib/supabase'
 
 // 讀取記分板
 export async function GET(req, { params }) {
