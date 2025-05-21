@@ -463,7 +463,7 @@ export default function GameRecord({ params }) {
                           </div>
                           {play.rbis > 0 && (
                             <div className="mt-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
-                              打點 +{play.rbis}
+                              {play.rbis}RBI
                             </div>
                           )}
                         </div>

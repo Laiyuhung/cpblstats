@@ -28,6 +28,13 @@ export default function SetupLineup() {
   }, [])
 
   useEffect(() => {
+    if (lineupComplete && selectedGame) {
+      router.push(`/gameRecord/${selectedGame}`)
+    }
+  }, [lineupComplete, selectedGame])
+
+
+  useEffect(() => {
     const game = games.find(g => g.game_no === Number(selectedGame));
     if (game) {
       setIsLoading(true) // 加這行
@@ -297,14 +304,14 @@ export default function SetupLineup() {
                 提交
               </button>
 
-              {lineupComplete && (
+              {/* {lineupComplete && (
                 <button
                   className="bg-green-600 text-white px-4 py-2 rounded mt-4 ml-4"
                   onClick={() => router.push(`/gameRecord/${selectedGame}`)}
                 >
                   開始記錄比賽
                 </button>
-              )}
+              )} */}
             </>
           )
         )}
