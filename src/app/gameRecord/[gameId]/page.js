@@ -21,6 +21,8 @@ export default function GameRecord({ params }) {
   const [playByPlay, setPlayByPlay] = useState([]) // 用於存放 Play-by-Play 記錄
   const [selectedResult, setSelectedResult] = useState('');
   const [scoreboard, setScoreboard] = useState(null)
+  const [homeCurrentBatterIndex, setHomeCurrentBatterIndex] = useState(0);
+  const [awayCurrentBatterIndex, setAwayCurrentBatterIndex] = useState(0);
 
 
   const resultOptions = [
@@ -330,15 +332,29 @@ export default function GameRecord({ params }) {
         setHalfInning(nextHalf);
         setInning(nextInning);
 
-        const nextBatters = nextHalf === 'top' ? awayBatters : homeBatters;
-        setCurrentBatter(nextBatters[0]);
-        setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
+        if (nextHalf === 'top') {
+          setAwayCurrentBatterIndex((awayCurrentBatterIndex + 1) % awayBatters.length);
+          setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
+          setCurrentPitcher(homePitcher);
+        } else {
+          setHomeCurrentBatterIndex((homeCurrentBatterIndex + 1) % homeBatters.length);
+          setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
+          setCurrentPitcher(awayPitcher);
+        }
+
         setOuts(0);
         setBases({ first: false, second: false, third: false });
       } else {
         const batters = halfInning === 'top' ? awayBatters : homeBatters;
-        const currentIndex = batters.findIndex(b => b.name === currentBatter.name);
+        const currentIndex = halfInning === 'top' ? awayCurrentBatterIndex : homeCurrentBatterIndex;
         const nextIndex = (currentIndex + 1) % batters.length;
+
+        if (halfInning === 'top') {
+          setAwayCurrentBatterIndex(nextIndex);
+        } else {
+          setHomeCurrentBatterIndex(nextIndex);
+        }
+
         setCurrentBatter(batters[nextIndex]);
       }
     } catch (error) {
