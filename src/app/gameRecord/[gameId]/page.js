@@ -378,11 +378,20 @@ export default function GameRecord({ params }) {
               {scoreboard.map((team, index) => (
                 <tr key={index}>
                   <td className="border px-2 py-1 text-center font-bold">{team.team_name}</td>
-                  {[...Array(Math.min(12, 9 + scoreboard.some(team => team.r > 0) ? 3 : 0))].map((_, i) => (
+                  {[...Array(Math.max(9, scoreboard.reduce((max, team) => {
+                    let inningCount = 0
+                    for (let i = 1; i <= 12; i++) {
+                      if (team[`score_${i}`] !== null && team[`score_${i}`] !== undefined) {
+                        inningCount = i
+                      }
+                    }
+                    return Math.max(max, inningCount)
+                  }, 0)))].map((_, i) => (
                     <td key={i} className="border px-2 py-1 text-center">
                       {team[`score_${i + 1}`] ?? ''}
                     </td>
                   ))}
+
                   <td className="border px-2 py-1 text-center">{team.r}</td>
                   <td className="border px-2 py-1 text-center">{team.h}</td>
                   <td className="border px-2 py-1 text-center">{team.e}</td>
