@@ -92,10 +92,9 @@ export default function GameRecord({ params }) {
   }, [gameId])
 
   useEffect(() => {
-    // 所有資料都準備好後才執行
     if (
-      isLoading ||                     // 尚在 loading
-      playByPlay.length === 0 ||      // 沒有打席資料
+      isLoading ||
+      playByPlay.length === 0 ||
       homeBatters.length === 0 ||
       awayBatters.length === 0 ||
       !homePitcher || !awayPitcher
@@ -104,17 +103,9 @@ export default function GameRecord({ params }) {
     const latest = playByPlay[playByPlay.length - 1];
     if (!latest) return;
 
-    // 推斷出局數（注意：打席紀錄的 out_condition 已包含當下總出局）
-    const outAddedByResult = {
-      K: 1, F: 1, FO: 1, G: 1, SF: 1,
-      DP: 2,
-      TP: 3,
-    };
-    const addedOuts = outAddedByResult[latest.result] || 0;
-    const computedOuts = Math.min((latest.out_condition || 0) + addedOuts, 3);
-    setOuts(computedOuts);
+    const outCount = latest.out_condition || 0;
+    setOuts(outCount);
 
-    // 推斷壘包狀態
     const parseBaseCondition = (condition) => ({
       first: condition.includes('一'),
       second: condition.includes('二'),
@@ -122,17 +113,32 @@ export default function GameRecord({ params }) {
     });
     setBases(parseBaseCondition(latest.base_condition || ''));
 
-    // 設定目前局數與投手
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
 
-    // 設定下一棒打者
     const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
     const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
-    const nextBatter = currentIndex >= 0 ? batters[(currentIndex + 1) % batters.length] : batters[0];
-    setCurrentBatter(nextBatter);
-  }, [isLoading]); // ✅ 注意只在資料初始載入完成時觸發一次
+    const nextIndex = (currentIndex + 1) % batters.length;
+    const nextBatter = batters[nextIndex];
+
+    // ✅ 加上：如果三出局，自動換局並指向正確打者與投手
+    if (outCount >= 3) {
+      const nextHalf = latest.half_inning === 'top' ? 'bottom' : 'top';
+      const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
+      setHalfInning(nextHalf);
+      setInning(nextInning);
+
+      const nextBatters = nextHalf === 'top' ? awayBatters : homeBatters;
+      setCurrentBatter(nextBatters[nextIndex]);
+      setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
+      setOuts(0);
+      setBases({ first: false, second: false, third: false });
+    } else {
+      setCurrentBatter(nextBatter);
+    }
+  }, [isLoading]);
+
 
 
 
