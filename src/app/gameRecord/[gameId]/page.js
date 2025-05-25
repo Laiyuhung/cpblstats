@@ -357,20 +357,20 @@ export default function GameRecord({ params }) {
           <table className="table-auto border border-gray-300 w-full text-sm">
             <thead>
               <tr>
-                <th className="border px-2 py-1">隊伍</th>
-                {[...Array(15)].map((_, i) => (
-                  <th key={i} className="border px-2 py-1">{i + 1}</th>
+                <th className="border px-2 py-1 text-center">隊伍</th>
+                {[...Array(Math.min(12, 9 + scoreboard.some(team => team.r > 0) ? 3 : 0))].map((_, i) => (
+                  <th key={i} className="border px-2 py-1 text-center">{i + 1}</th>
                 ))}
-                <th className="border px-2 py-1">R</th>
-                <th className="border px-2 py-1">H</th>
-                <th className="border px-2 py-1">E</th>
+                <th className="border px-2 py-1 text-center">R</th>
+                <th className="border px-2 py-1 text-center">H</th>
+                <th className="border px-2 py-1 text-center">E</th>
               </tr>
             </thead>
             <tbody>
               {scoreboard.map((team, index) => (
                 <tr key={index}>
-                  <td className="border px-2 py-1 font-bold">{team.team_name}</td>
-                  {[...Array(15)].map((_, i) => (
+                  <td className="border px-2 py-1 text-center font-bold">{team.team_name}</td>
+                  {[...Array(Math.min(12, 9 + scoreboard.some(team => team.r > 0) ? 3 : 0))].map((_, i) => (
                     <td key={i} className="border px-2 py-1 text-center">
                       {team[`score_${i + 1}`] ?? ''}
                     </td>
