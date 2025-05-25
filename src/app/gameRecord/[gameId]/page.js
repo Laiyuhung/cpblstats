@@ -92,79 +92,48 @@ export default function GameRecord({ params }) {
   }, [gameId])
 
   useEffect(() => {
+    // 所有資料都準備好後才執行
     if (
-      playByPlay.length === 0 ||
+      isLoading ||                     // 尚在 loading
+      playByPlay.length === 0 ||      // 沒有打席資料
       homeBatters.length === 0 ||
       awayBatters.length === 0 ||
-      !homePitcher ||
-      !awayPitcher
+      !homePitcher || !awayPitcher
     ) return;
 
     const latest = playByPlay[playByPlay.length - 1];
+    if (!latest) return;
 
-    // 推斷出局數
+    // 推斷出局數（注意：打席紀錄的 out_condition 已包含當下總出局）
     const outAddedByResult = {
       K: 1, F: 1, FO: 1, G: 1, SF: 1,
       DP: 2,
       TP: 3,
     };
     const addedOuts = outAddedByResult[latest.result] || 0;
-    const updatedOuts = Math.min((latest.out_condition || 0) + addedOuts, 3);
+    const computedOuts = Math.min((latest.out_condition || 0) + addedOuts, 3);
+    setOuts(computedOuts);
 
     // 推斷壘包狀態
-    const predictBasesAfterPlay = (result, prevBaseCondition) => {
-      const bases = {
-        first: prevBaseCondition.includes('一'),
-        second: prevBaseCondition.includes('二'),
-        third: prevBaseCondition.includes('三'),
-      };
-      const newBases = { first: false, second: false, third: false };
+    const parseBaseCondition = (condition) => ({
+      first: condition.includes('一'),
+      second: condition.includes('二'),
+      third: condition.includes('三'),
+    });
+    setBases(parseBaseCondition(latest.base_condition || ''));
 
-      switch (result) {
-        case '1B':
-        case 'BB':
-        case 'IBB':
-        case 'HBP':
-        case 'E':
-          if (bases.third) newBases.third = false;
-          if (bases.second) newBases.third = true;
-          if (bases.first) newBases.second = true;
-          newBases.first = true;
-          break;
-        case '2B':
-          if (bases.third || bases.second) {
-            newBases.third = false;
-            newBases.second = false;
-          }
-          if (bases.first) {
-            newBases.third = true;
-          }
-          newBases.second = true;
-          break;
-        case '3B':
-          newBases.third = true;
-          break;
-        case 'HR':
-          // 清空壘包
-          break;
-        default:
-          return bases; // 出局類，不動
-      }
-      return newBases;
-    };
-
-    const newBases = predictBasesAfterPlay(latest.result, latest.base_condition || '');
-
-    setOuts(updatedOuts);
-    setBases(newBases);
+    // 設定目前局數與投手
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
 
+    // 設定下一棒打者
     const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
     const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
-    setCurrentBatter(currentIndex >= 0 ? batters[(currentIndex + 1) % batters.length] : batters[0]);
-  }, [playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
+    const nextBatter = currentIndex >= 0 ? batters[(currentIndex + 1) % batters.length] : batters[0];
+    setCurrentBatter(nextBatter);
+  }, [isLoading]); // ✅ 注意只在資料初始載入完成時觸發一次
+
 
 
 
