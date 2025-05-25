@@ -103,7 +103,7 @@ export default function GameRecord({ params }) {
     ) return;
 
     const latest = playByPlay[playByPlay.length - 1];
-    if (!latest) return;
+    if (!latest) return; 
 
     const outCount = latest.out_condition || 0;
     setOuts(outCount);
