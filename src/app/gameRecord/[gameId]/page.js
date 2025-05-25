@@ -358,7 +358,15 @@ export default function GameRecord({ params }) {
             <thead>
               <tr>
                 <th className="border px-2 py-1 text-center">隊伍</th>
-                {[...Array(Math.min(12, 9 + scoreboard.some(team => team.r > 0) ? 3 : 0))].map((_, i) => (
+                {[...Array(Math.max(9, scoreboard.reduce((max, team) => {
+                  let inningCount = 0
+                  for (let i = 1; i <= 12; i++) {
+                    if (team[`score_${i}`] !== null && team[`score_${i}`] !== undefined) {
+                      inningCount = i
+                    }
+                  }
+                  return Math.max(max, inningCount)
+                }, 0)))].map((_, i) => (
                   <th key={i} className="border px-2 py-1 text-center">{i + 1}</th>
                 ))}
                 <th className="border px-2 py-1 text-center">R</th>
