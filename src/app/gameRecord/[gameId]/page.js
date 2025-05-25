@@ -234,6 +234,14 @@ export default function GameRecord({ params }) {
     // 計算 sequence 為歷史記錄的最大值加 1
     const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1
 
+    const outAddedByResult = {
+      K: 1, F: 1, FO: 1, G: 1, SF: 1,
+      DP: 2,
+      TP: 3,
+    }
+    const addedOuts = outAddedByResult[result] || 0
+    const computedOuts = Math.min(outs + addedOuts, 3)
+
     const atBatData = {
       game_no: Number(gameId),
       batter_name: currentBatter.name,
@@ -241,12 +249,13 @@ export default function GameRecord({ params }) {
       inning,
       half_inning: halfInning === 'top' ? 'top' : 'bottom',
       result,
-      at_bat: atBat, // 使用打序表的打序
+      at_bat: atBat,
       rbis,
-      sequence: newSequence, // 使用歷史記錄最大值加 1
+      sequence: newSequence,
       base_condition: getBaseCondition(),
-      out_condition: outs
+      out_condition: computedOuts,  // ⬅ 這裡是關鍵
     }
+
 
     try {
       const res = await fetch('/api/record-at-bat', {
