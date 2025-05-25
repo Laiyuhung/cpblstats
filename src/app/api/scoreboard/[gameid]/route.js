@@ -1,14 +1,14 @@
-// /app/api/scoreboard/[game_id]/route.js
+// /app/api/scoreboard/[gameid]/route.js
 
 import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 
 // 讀取記分板
 export async function GET(req, context) {
-  console.log('➡️ 進入 GET /api/scoreboard/[game_id]', context?.params);
-  const gameId = context?.params?.game_id;
+  console.log('➡️ 進入 GET /api/scoreboard/[gameid]', context?.params);
+  const gameId = context?.params?.gameid;
   if (!gameId) {
-    return NextResponse.json({ error: '缺少 game_id' }, { status: 400 });
+    return NextResponse.json({ error: '缺少 gameid' }, { status: 400 });
   }
 
   const { data, error } = await supabase
@@ -27,7 +27,7 @@ export async function GET(req, context) {
 
 // 更新記分板
 export async function PUT(req, { params }) {
-  const gameId = params.game_id
+  const gameId = params.gameid
   const body = await req.json() // 包含 team_type, score_1 ~ score_15, R, H, E
 
   if (!['home', 'away'].includes(body.team_type)) {
@@ -49,7 +49,7 @@ export async function PUT(req, { params }) {
 
 // 建立記分板（如果該隊尚未建立）
 export async function POST(req, { params }) {
-  const gameId = params.game_id
+  const gameId = params.gameid
   const body = await req.json() // 包含 team_type 與 team_name
 
   if (!['home', 'away'].includes(body.team_type)) {
