@@ -102,35 +102,70 @@ export default function GameRecord({ params }) {
 
     const latest = playByPlay[playByPlay.length - 1];
 
-    // 1. 更新出局與壘包狀態
-    setOuts(latest.out_condition || 0);
+    // 推斷出局數
+    const outAddedByResult = {
+      K: 1, F: 1, FO: 1, G: 1, SF: 1,
+      DP: 2,
+      TP: 3,
+    };
+    const addedOuts = outAddedByResult[latest.result] || 0;
+    const updatedOuts = Math.min((latest.out_condition || 0) + addedOuts, 3);
 
-    const condition = latest.base_condition || '';
-    setBases({
-      first: condition.includes('一'),
-      second: condition.includes('二'),
-      third: condition.includes('三'),
-    });
+    // 推斷壘包狀態
+    const predictBasesAfterPlay = (result, prevBaseCondition) => {
+      const bases = {
+        first: prevBaseCondition.includes('一'),
+        second: prevBaseCondition.includes('二'),
+        third: prevBaseCondition.includes('三'),
+      };
+      const newBases = { first: false, second: false, third: false };
 
-    // 2. 更新局數與上下半局
+      switch (result) {
+        case '1B':
+        case 'BB':
+        case 'IBB':
+        case 'HBP':
+        case 'E':
+          if (bases.third) newBases.third = false;
+          if (bases.second) newBases.third = true;
+          if (bases.first) newBases.second = true;
+          newBases.first = true;
+          break;
+        case '2B':
+          if (bases.third || bases.second) {
+            newBases.third = false;
+            newBases.second = false;
+          }
+          if (bases.first) {
+            newBases.third = true;
+          }
+          newBases.second = true;
+          break;
+        case '3B':
+          newBases.third = true;
+          break;
+        case 'HR':
+          // 清空壘包
+          break;
+        default:
+          return bases; // 出局類，不動
+      }
+      return newBases;
+    };
+
+    const newBases = predictBasesAfterPlay(latest.result, latest.base_condition || '');
+
+    setOuts(updatedOuts);
+    setBases(newBases);
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
-
-    // 3. 投手
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
 
-    // 4. 打者（從打序裡找到當前打者，再決定下一棒）
     const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
     const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
-
-    if (currentIndex >= 0) {
-      const nextBatter = batters[(currentIndex + 1) % batters.length];
-      setCurrentBatter(nextBatter);
-    } else {
-      console.warn('⚠️ 找不到上一棒打者，預設從第一棒開始');
-      setCurrentBatter(batters[0]); // fallback
-    }
+    setCurrentBatter(currentIndex >= 0 ? batters[(currentIndex + 1) % batters.length] : batters[0]);
   }, [playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
+
 
 
 
