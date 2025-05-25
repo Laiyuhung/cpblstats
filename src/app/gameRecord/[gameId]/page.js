@@ -230,54 +230,68 @@ export default function GameRecord({ params }) {
     return `${first ? '一' : ''}${second ? '二' : ''}${third ? '三' : ''}`
   }
   const handleRecordAtBat = async (result) => {
-    if (!currentBatter || !currentPitcher) return;
+    if (!currentBatter || !currentPitcher) return
 
-    const atBat = currentBatter?.order || 0;
-    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1;
+    // 計算 at_bat 為當前打者的打序
+    const atBat = currentBatter?.order || 0
 
-    const outAddedByResult = {
-      K: 1, F: 1, FO: 1, G: 1, SF: 1,
-      DP: 2,
-      TP: 3,
-    };
-    const addedOuts = outAddedByResult[result] || 0;
-    const computedOuts = Math.min(outs + addedOuts, 3);
-
-    // 👉 新增壘包推斷邏輯
     const predictBasesAfterPlay = (result) => {
-      const newBases = { first: false, second: false, third: false };
       const { first, second, third } = bases;
+      const newBases = { first: false, second: false, third: false };
 
       switch (result) {
         case '1B':
-        case 'HBP':
         case 'BB':
         case 'IBB':
+        case 'HBP':
         case 'E':
-          newBases.first = true;
-          if (first) newBases.second = true;
+          if (third) newBases.third = false;
           if (second) newBases.third = true;
+          if (first) newBases.second = true;
+          newBases.first = true;
           break;
         case '2B':
+          if (third || second) {
+            newBases.third = false;
+            newBases.second = false;
+          }
+          if (first) {
+            newBases.third = true;
+          }
           newBases.second = true;
-          if (first) newBases.third = true;
           break;
         case '3B':
           newBases.third = true;
           break;
         case 'HR':
-          // 清空壘包
+          // 全壘打清空壘包
           break;
         default:
-          // 出局類不變
+          // 出局類不推壘包
           return bases;
       }
+
       return newBases;
     };
 
+    // 計算 sequence 為歷史記錄的最大值加 1
+    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1
+
+    const outAddedByResult = {
+      K: 1, F: 1, FO: 1, G: 1, SF: 1,
+      DP: 2,
+      TP: 3,
+    }
+    const addedOuts = outAddedByResult[result] || 0
+    const computedOuts = Math.min(outs + addedOuts, 3)
+
+    // ✅ 新增：推測壘包狀態
     const nextBases = predictBasesAfterPlay(result);
-    setBases(nextBases); // 立即更新畫面上的壘包狀態
-    setOuts(computedOuts); // 立即更新出局數（若你希望 UI 立即顯示）
+    setOuts(computedOuts);      // 更新左側出局數
+    setBases(nextBases);        // 更新左側壘包狀態
+
+    
+
 
     const atBatData = {
       game_no: Number(gameId),
@@ -289,27 +303,39 @@ export default function GameRecord({ params }) {
       at_bat: atBat,
       rbis,
       sequence: newSequence,
-      base_condition: `${nextBases.first ? '一' : ''}${nextBases.second ? '二' : ''}${nextBases.third ? '三' : ''}` || '無人',
-      out_condition: computedOuts,
-    };
+      base_condition: getBaseCondition(),
+      out_condition: computedOuts,  // ⬅ 這裡是關鍵
+    }
+
 
     try {
       const res = await fetch('/api/record-at-bat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(atBatData)
-      });
+      })
 
-      if (!res.ok) throw new Error('記錄打席失敗');
-      setPlayByPlay(prev => [...prev, atBatData]);
-      setRbis(0);
+      if (!res.ok) {
+        throw new Error('記錄打席失敗')
+      }
+
+      // 更新 Play-by-Play 記錄
+      setPlayByPlay(prev => [...prev, atBatData])
+
+      // 重置打點計數
+      setRbis(0)
+
+      // 更新壘包狀態、出局數、換邊等邏輯
+      // updateGameState(result)
       setSelectedResult('');
-    } catch (error) {
-      console.error('記錄失敗:', error);
-      alert('記錄打席時發生錯誤');
-    }
-  };
 
+      // 重置回初始模式，設定下一打席的壘包狀態
+      // setEditMode('state') // 已移除，不再需要
+    } catch (error) {
+      console.error('記錄失敗:', error)
+      alert('記錄打席時發生錯誤')
+    }
+  }
 
   const handleRunnerOut = () => {
     const newOuts = outs + 1;
