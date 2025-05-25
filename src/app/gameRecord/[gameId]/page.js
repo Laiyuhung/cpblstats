@@ -291,10 +291,6 @@ export default function GameRecord({ params }) {
     const addedOuts = outAddedByResult[result] || 0;
     const computedOuts = Math.min(outs + addedOuts, 3);
 
-    const nextBases = predictBasesAfterPlay(result);
-    setOuts(computedOuts);
-    setBases(nextBases);
-
     const atBatData = {
       game_no: Number(gameId),
       batter_name: currentBatter.name,
@@ -306,7 +302,7 @@ export default function GameRecord({ params }) {
       rbis,
       sequence: newSequence,
       base_condition: getBaseCondition(),
-      out_condition: computedOuts,
+      out_condition: outs, // 先記錄當前的出局數
     };
 
     try {
@@ -323,6 +319,10 @@ export default function GameRecord({ params }) {
       setPlayByPlay(prev => [...prev, atBatData]);
       setRbis(0);
       setSelectedResult('');
+
+      const nextBases = predictBasesAfterPlay(result);
+      setOuts(computedOuts); // 更新出局數
+      setBases(nextBases); // 更新壘包狀態
 
       if (computedOuts >= 3) {
         const nextHalf = halfInning === 'top' ? 'bottom' : 'top';
