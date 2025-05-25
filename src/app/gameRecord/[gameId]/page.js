@@ -92,7 +92,13 @@ export default function GameRecord({ params }) {
   }, [gameId])
 
   useEffect(() => {
-    if (playByPlay.length === 0) return;
+    if (
+      playByPlay.length === 0 ||
+      homeBatters.length === 0 ||
+      awayBatters.length === 0 ||
+      !homePitcher ||
+      !awayPitcher
+    ) return;
 
     const latest = playByPlay[playByPlay.length - 1];
 
@@ -104,22 +110,25 @@ export default function GameRecord({ params }) {
     setBases({
       first: condition.includes('一'),
       second: condition.includes('二'),
-      third: condition.includes('三')
+      third: condition.includes('三'),
     });
 
     // 3. 局數與上下半局
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
 
-    // 4. 下一棒打者
+    // 4. 下一棒打者（確保打者陣列已完成）
     const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
     const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
     const nextBatter = batters[(currentIndex + 1) % batters.length];
-    setCurrentBatter(nextBatter);
+    if (nextBatter) {
+      setCurrentBatter(nextBatter);
+    }
 
     // 5. 投手
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
   }, [playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
+
 
 
   useEffect(() => {
@@ -293,80 +302,80 @@ export default function GameRecord({ params }) {
 
 
   // 根據打擊結果更新比賽狀態
-  const updateGameState = (result) => {
-    // 處理出局數變化
-    let newOuts = outs
-    if (['K', 'F', 'FO', 'G', 'SF'].includes(result)) {
-      newOuts += 1
-    } else if (result === 'DP') {
-      newOuts += 2
-    }
+  // const updateGameState = (result) => {
+  //   // 處理出局數變化
+  //   let newOuts = outs
+  //   if (['K', 'F', 'FO', 'G', 'SF'].includes(result)) {
+  //     newOuts += 1
+  //   } else if (result === 'DP') {
+  //     newOuts += 2
+  //   }
 
-    // 處理壘包狀態變化
-    let newBases = { ...bases }
-    if (['1B', 'BB', 'IBB', 'HBP', 'E'].includes(result)) {
-      // 一壘安打或四壞球：跑者前進一個壘包，打者上一壘
-      if (newBases.third) newBases.third = false // 三壘跑者回本壘得分
-      if (newBases.second) {
-        newBases.third = true
-        newBases.second = false
-      }
-      if (newBases.first) {
-        newBases.second = true
-      }
-      newBases.first = true
-    } else if (result === '2B') {
-      // 二壘安打：跑者前進兩個壘包，打者上二壘
-      if (newBases.third || newBases.second) {
-        // 二三壘跑者回本壘得分
-        newBases.third = false
-        newBases.second = false
-      }
-      if (newBases.first) {
-        newBases.third = true
-        newBases.first = false
-      }
-      newBases.second = true
-    } else if (result === '3B') {
-      // 三壘安打：所有跑者回本壘得分，打者上三壘
-      newBases = { first: false, second: false, third: true }
-    } else if (result === 'HR') {
-      // 全壘打：所有跑者和打者都回本壘得分
-      newBases = { first: false, second: false, third: false }
-    }
+  //   // 處理壘包狀態變化
+  //   let newBases = { ...bases }
+  //   if (['1B', 'BB', 'IBB', 'HBP', 'E'].includes(result)) {
+  //     // 一壘安打或四壞球：跑者前進一個壘包，打者上一壘
+  //     if (newBases.third) newBases.third = false // 三壘跑者回本壘得分
+  //     if (newBases.second) {
+  //       newBases.third = true
+  //       newBases.second = false
+  //     }
+  //     if (newBases.first) {
+  //       newBases.second = true
+  //     }
+  //     newBases.first = true
+  //   } else if (result === '2B') {
+  //     // 二壘安打：跑者前進兩個壘包，打者上二壘
+  //     if (newBases.third || newBases.second) {
+  //       // 二三壘跑者回本壘得分
+  //       newBases.third = false
+  //       newBases.second = false
+  //     }
+  //     if (newBases.first) {
+  //       newBases.third = true
+  //       newBases.first = false
+  //     }
+  //     newBases.second = true
+  //   } else if (result === '3B') {
+  //     // 三壘安打：所有跑者回本壘得分，打者上三壘
+  //     newBases = { first: false, second: false, third: true }
+  //   } else if (result === 'HR') {
+  //     // 全壘打：所有跑者和打者都回本壘得分
+  //     newBases = { first: false, second: false, third: false }
+  //   }
 
-    // 更新狀態
-    setOuts(newOuts)
-    setBases(newBases)
+  //   // 更新狀態
+  //   setOuts(newOuts)
+  //   setBases(newBases)
 
-    // 檢查是否需要換邊
-    if (newOuts >= 3) {
-      // 換邊，重置出局數和壘包
-      setOuts(0)
-      setBases({ first: false, second: false, third: false })
+  //   // 檢查是否需要換邊
+  //   if (newOuts >= 3) {
+  //     // 換邊，重置出局數和壘包
+  //     setOuts(0)
+  //     setBases({ first: false, second: false, third: false })
 
-      if (halfInning === 'top') {
-        // 上半局結束，換下半局
-        setHalfInning('bottom')
-        // 設定新的打者和投手
-        setCurrentBatter(homeBatters[0])
-        setCurrentPitcher(awayPitcher)
-      } else {
-        // 下半局結束，換上半局，局數+1
-        setHalfInning('top')
-        setInning(inning + 1)
-        // 設定新的打者和投手
-        setCurrentBatter(awayBatters[0])
-        setCurrentPitcher(homePitcher)
-      }
-    } else {
-      // 同一半局，換下一位打者
-      const currentTeamBatters = halfInning === 'top' ? awayBatters : homeBatters
-      const currentBatterIndex = currentTeamBatters.findIndex(b => b.name === currentBatter.name)
-      const nextBatterIndex = (currentBatterIndex + 1) % 9 // 循環到第9棒後回到第1棒
-      setCurrentBatter(currentTeamBatters[nextBatterIndex])
-    }
-  }
+  //     if (halfInning === 'top') {
+  //       // 上半局結束，換下半局
+  //       setHalfInning('bottom')
+  //       // 設定新的打者和投手
+  //       setCurrentBatter(homeBatters[0])
+  //       setCurrentPitcher(awayPitcher)
+  //     } else {
+  //       // 下半局結束，換上半局，局數+1
+  //       setHalfInning('top')
+  //       setInning(inning + 1)
+  //       // 設定新的打者和投手
+  //       setCurrentBatter(awayBatters[0])
+  //       setCurrentPitcher(homePitcher)
+  //     }
+  //   } else {
+  //     // 同一半局，換下一位打者
+  //     const currentTeamBatters = halfInning === 'top' ? awayBatters : homeBatters
+  //     const currentBatterIndex = currentTeamBatters.findIndex(b => b.name === currentBatter.name)
+  //     const nextBatterIndex = (currentBatterIndex + 1) % 9 // 循環到第9棒後回到第1棒
+  //     setCurrentBatter(currentTeamBatters[nextBatterIndex])
+  //   }
+  // }
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
