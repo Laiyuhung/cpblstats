@@ -91,6 +91,35 @@ export default function GameRecord({ params }) {
       })
   }, [gameId])
 
+  useEffect(() => {
+    if (playByPlay.length === 0) return;
+
+    const latest = playByPlay[playByPlay.length - 1];
+
+    // 1. 出局數
+    setOuts(latest.out_condition || 0);
+
+    // 2. 壘包狀態
+    const condition = latest.base_condition || '';
+    setBases({
+      first: condition.includes('一'),
+      second: condition.includes('二'),
+      third: condition.includes('三')
+    });
+
+    // 3. 局數與上下半局
+    setInning(latest.inning);
+    setHalfInning(latest.half_inning);
+
+    // 4. 下一棒打者
+    const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
+    const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
+    const nextBatter = batters[(currentIndex + 1) % batters.length];
+    setCurrentBatter(nextBatter);
+
+    // 5. 投手
+    setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
+  }, [playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
 
 
   useEffect(() => {
@@ -228,7 +257,7 @@ export default function GameRecord({ params }) {
       setRbis(0)
 
       // 更新壘包狀態、出局數、換邊等邏輯
-      updateGameState(result)
+      // updateGameState(result)
       setSelectedResult('');
 
       // 重置回初始模式，設定下一打席的壘包狀態
