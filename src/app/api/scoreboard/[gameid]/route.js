@@ -5,6 +5,7 @@ import supabase from '@/lib/supabase'
 
 // 讀取記分板
 export async function GET(req, context) {
+  console.log('➡️ 進入 GET /api/scoreboard/[game_id]', context?.params);
   const gameId = context?.params?.game_id;
   if (!gameId) {
     return NextResponse.json({ error: '缺少 game_id' }, { status: 400 });
