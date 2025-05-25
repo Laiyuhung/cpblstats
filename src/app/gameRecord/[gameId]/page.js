@@ -53,11 +53,13 @@ export default function GameRecord({ params }) {
     fetch(`/api/scoreboard/${gameId}`)
       .then(res => res.json())
       .then(async (data) => {
+        console.log('📋 初始記分板資料:', data);
         if (!data || data.length === 0) {
-          // 若無記分板，建立 home 與 away 各一筆
-          const gameRes = await fetch(`/api/games?game_id=${gameId}`)
-          const gameData = await gameRes.json()
-          const game = gameData[0]
+          console.log('⚠️ 記分板不存在，嘗試建立記分板');
+          const gameRes = await fetch(`/api/games?game_id=${gameId}`);
+          const gameData = await gameRes.json();
+          console.log('📋 比賽資料:', gameData);
+          const game = gameData[0];
 
           if (game) {
             await Promise.all([
@@ -71,19 +73,21 @@ export default function GameRecord({ params }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ team_type: 'away', team_name: game.away })
               })
-            ])
+            ]);
 
-            // 重新抓取
-            const reloadRes = await fetch(`/api/scoreboard/${gameId}`)
-            const reloadData = await reloadRes.json()
-            setScoreboard(reloadData)
+            console.log('✅ 記分板建立完成，重新抓取資料');
+            const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+            const reloadData = await reloadRes.json();
+            console.log('📋 重新載入的記分板資料:', reloadData);
+            setScoreboard(reloadData);
           }
         } else {
-          setScoreboard(data)
+          console.log('✅ 記分板已存在:', data);
+          setScoreboard(data);
         }
       })
       .catch(err => {
-        console.error('❌ 無法讀取或建立記分板:', err)
+        console.error('❌ 無法讀取或建立記分板:', err);
       })
   }, [gameId])
 
