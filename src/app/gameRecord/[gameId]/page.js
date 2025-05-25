@@ -333,12 +333,14 @@ export default function GameRecord({ params }) {
         setInning(nextInning);
 
         if (nextHalf === 'top') {
-          setAwayCurrentBatterIndex((awayCurrentBatterIndex + 1) % awayBatters.length);
-          setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
+          const nextIndex = (awayCurrentBatterIndex + 1) % awayBatters.length;
+          setAwayCurrentBatterIndex(nextIndex);
+          setCurrentBatter(awayBatters[nextIndex]);
           setCurrentPitcher(homePitcher);
         } else {
-          setHomeCurrentBatterIndex((homeCurrentBatterIndex + 1) % homeBatters.length);
-          setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
+          const nextIndex = (homeCurrentBatterIndex + 1) % homeBatters.length;
+          setHomeCurrentBatterIndex(nextIndex);
+          setCurrentBatter(homeBatters[nextIndex]);
           setCurrentPitcher(awayPitcher);
         }
 
