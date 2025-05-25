@@ -367,17 +367,17 @@ export default function GameRecord({ params }) {
               </tr>
             </thead>
             <tbody>
-              {['away', 'home'].map(team => (
-                <tr key={team}>
-                  <td className="border px-2 py-1 font-bold">{scoreboard[`${team}_team`]}</td>
+              {scoreboard.map((team, index) => (
+                <tr key={index}>
+                  <td className="border px-2 py-1 font-bold">{team.team_name}</td>
                   {[...Array(15)].map((_, i) => (
                     <td key={i} className="border px-2 py-1 text-center">
-                      {scoreboard[`${team}_scores`]?.[i] ?? ''}
+                      {team[`score_${i + 1}`] ?? ''}
                     </td>
                   ))}
-                  <td className="border px-2 py-1">{scoreboard[`${team}_R`]}</td>
-                  <td className="border px-2 py-1">{scoreboard[`${team}_H`]}</td>
-                  <td className="border px-2 py-1">{scoreboard[`${team}_E`]}</td>
+                  <td className="border px-2 py-1 text-center">{team.r}</td>
+                  <td className="border px-2 py-1 text-center">{team.h}</td>
+                  <td className="border px-2 py-1 text-center">{team.e}</td>
                 </tr>
               ))}
             </tbody>
