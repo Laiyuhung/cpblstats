@@ -93,10 +93,8 @@ export default function GameRecord({ params }) {
       })
   }, [gameId])
 
+  // 重新計算棒次，每次 playByPlay 更新都執行
   useEffect(() => {
-    // 🆕 載入時就計算兩隊逐打席紀錄數量來算棒次，並印出計算過程
-    // 🆕 棒次計算與換局修正：切換局時應該是原隊棒次+1，運行時也用 log 數量 % 9 + 1，並 console
-    // 棒次完全由 log 數量 % 打序長度決定，不再於換局時 +1
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
     const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
     const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
@@ -105,7 +103,9 @@ export default function GameRecord({ params }) {
     console.log('[棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex + 1);
     setAwayCurrentBatterIndex(awayIndex);
     setHomeCurrentBatterIndex(homeIndex);
+  }, [playByPlay, homeBatters, awayBatters]);
 
+  useEffect(() => {
     if (isLoading || playByPlay.length === 0 || homeBatters.length === 0 || awayBatters.length === 0 || !homePitcher || !awayPitcher) return;
 
     const latest = playByPlay[playByPlay.length - 1];
