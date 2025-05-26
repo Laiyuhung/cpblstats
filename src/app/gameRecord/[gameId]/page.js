@@ -103,10 +103,18 @@ export default function GameRecord({ params }) {
     ) return;
 
     const latest = playByPlay[playByPlay.length - 1];
-    if (!latest) return; 
+    if (!latest) return;
 
-    const outCount = latest.out_condition || 0;
-    setOuts(outCount);
+    // 🆕 加入根據 result 推算出局數的邏輯
+    const resultOutMap = {
+      K: 1, F: 1, FO: 1, G: 1, SF: 1,
+      DP: 2,
+      TP: 3,
+    };
+    const baseOuts = latest.out_condition || 0;
+    const resultOuts = resultOutMap[latest.result] || 0;
+    const totalOuts = baseOuts + resultOuts;
+    setOuts(Math.min(totalOuts, 3));
 
     const parseBaseCondition = (condition) => ({
       first: condition.includes('一'),
@@ -124,25 +132,21 @@ export default function GameRecord({ params }) {
     const nextIndex = (currentIndex + 1) % batters.length;
     const nextBatter = batters[nextIndex];
 
-    // ✅ 加上：如果三出局，自動換局並指向正確打者與投手
-    if (outCount >= 3) {
+    if (totalOuts >= 3) {
       const nextHalf = latest.half_inning === 'top' ? 'bottom' : 'top';
       const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
       setHalfInning(nextHalf);
       setInning(nextInning);
 
       const nextBatters = nextHalf === 'top' ? awayBatters : homeBatters;
-      setCurrentBatter(nextBatters[nextIndex]);
+      setCurrentBatter(nextBatters[nextIndex]); // ✅ 接續打序
       setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
       setCurrentBatter(nextBatter);
     }
-  }, [isLoading]); 
-
-
-
+  }, [isLoading]);
 
 
 
