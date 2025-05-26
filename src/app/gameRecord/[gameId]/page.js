@@ -132,26 +132,34 @@ export default function GameRecord({ params }) {
     const nextIndex = (currentIndex + 1) % batters.length;
     const nextBatter = batters[nextIndex];
 
+    // 🆕 棒次計算改為：各隊逐打席紀錄數 % 9 + 1，並印出計算過程
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
+    const awayIndex = awayPlays.length % awayBatters.length;
+    const homeIndex = homePlays.length % homeBatters.length;
+    console.log('[棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex);
+    console.log('[棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex);
+
     if (totalOuts >= 3) {
       const nextHalf = latest.half_inning === 'top' ? 'bottom' : 'top';
       const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
       setHalfInning(nextHalf);
       setInning(nextInning);
-
       if (nextHalf === 'top') {
-        const index = awayCurrentBatterIndex;
-        setCurrentBatter(awayBatters[index]);
+        setCurrentBatter(awayBatters[awayIndex]);
         setCurrentPitcher(homePitcher);
       } else {
-        const index = homeCurrentBatterIndex;
-        setCurrentBatter(homeBatters[index]);
+        setCurrentBatter(homeBatters[homeIndex]);
         setCurrentPitcher(awayPitcher);
       }
-
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
-      setCurrentBatter(nextBatter);
+      if (latest.half_inning === 'top') {
+        setCurrentBatter(awayBatters[awayIndex]);
+      } else {
+        setCurrentBatter(homeBatters[homeIndex]);
+      }
     }
   }, [isLoading]);
 
