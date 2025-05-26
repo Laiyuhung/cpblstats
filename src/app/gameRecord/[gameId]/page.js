@@ -97,10 +97,14 @@ export default function GameRecord({ params }) {
     // 🆕 載入時就計算兩隊逐打席紀錄數量來算棒次，並印出計算過程
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
     const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
-    const awayIndex = awayPlays.length % awayBatters.length;
-    const homeIndex = homePlays.length % homeBatters.length;
-    console.log('[載入棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex);
-    console.log('[載入棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex);
+    const awayIndex = (awayPlays.length % awayBatters.length);
+    const homeIndex = (homePlays.length % homeBatters.length);
+    console.log('[載入棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex + 1);
+    console.log('[載入棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex + 1);
+
+    // 同步黃色區塊的棒次 index 狀態
+    setAwayCurrentBatterIndex(awayIndex);
+    setHomeCurrentBatterIndex(homeIndex);
 
     if (isLoading || playByPlay.length === 0 || homeBatters.length === 0 || awayBatters.length === 0 || !homePitcher || !awayPitcher) return;
 
