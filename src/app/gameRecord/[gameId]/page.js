@@ -130,7 +130,7 @@ export default function GameRecord({ params }) {
     const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
     const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
     const nextIndex = (currentIndex + 1) % batters.length;
-    const nextBatter = batters[nextIndex];
+    // const nextBatter = batters[nextIndex]; // 已不再使用，移除避免 eslint error
 
     // 🆕 棒次計算改為：各隊逐打席紀錄數 % 9 + 1，並印出計算過程
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
