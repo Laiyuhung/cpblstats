@@ -381,7 +381,7 @@ export default function GameRecord({ params }) {
       }
 
       setPlayByPlay(prev => [...prev, atBatData]);
-      setRbis(0);
+      setRbis(0); // 送出後歸0
       setSelectedResult('');
 
       const nextBases = predictBasesAfterPlay(result);
@@ -448,6 +448,72 @@ export default function GameRecord({ params }) {
         setCurrentPitcher(homePitcher);
       }
     }
+  };
+
+
+  // 分數與失誤編輯權限：僅在目前半局可編輯分數，僅在守備局可編輯失誤
+  const canEditScore = (team) => {
+    return (team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom');
+  };
+
+  const canEditError = (team) => {
+    return (team.team_name === game.away && halfInning === 'bottom') || (team.team_name === game.home && halfInning === 'top');
+  };
+
+  // 新增分數與失誤編輯元件
+  const ScoreboardEditor = ({ team }) => {
+    const inningKey = `score_${inning}`;
+    return (
+      <div className="flex items-center gap-4 mb-2">
+        <span className="font-bold w-16">{team.team_name}</span>
+        <span>第 {inning}{halfInning === 'top' ? '上' : '下'} 分數：</span>
+        {canEditScore(team) ? (
+          <input
+            type="number"
+            className="border rounded px-2 py-1 w-16"
+            value={team[inningKey] ?? ''}
+            onChange={async (e) => {
+              const val = e.target.value === '' ? null : Number(e.target.value);
+              // 呼叫 API 更新分數
+              await fetch(`/api/scoreboard/${gameId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_name: team.team_name, inning, score: val })
+              });
+              // 重新抓取分數
+              const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+              const reloadData = await reloadRes.json();
+              setScoreboard(reloadData);
+            }}
+          />
+        ) : (
+          <span className="w-16 inline-block text-center">{team[inningKey] ?? ''}</span>
+        )}
+        <span className="ml-4">失誤：</span>
+        {canEditError(team) ? (
+          <input
+            type="number"
+            className="border rounded px-2 py-1 w-12"
+            value={team.e ?? ''}
+            onChange={async (e) => {
+              const val = e.target.value === '' ? null : Number(e.target.value);
+              // 呼叫 API 更新失誤
+              await fetch(`/api/scoreboard/${gameId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_name: team.team_name, error: val })
+              });
+              // 重新抓取分數
+              const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+              const reloadData = await reloadRes.json();
+              setScoreboard(reloadData);
+            }}
+          />
+        ) : (
+          <span className="w-12 inline-block text-center">{team.e ?? ''}</span>
+        )}
+      </div>
+    );
   };
 
 
@@ -712,6 +778,70 @@ export default function GameRecord({ params }) {
           </ul>
 
         </ul>
+      </div>
+
+      {/* 分數與失誤編輯區塊 */}
+      <div className="max-w-6xl mx-auto p-4 mb-4">
+        <h3 className="font-bold mb-2">分數/失誤編輯</h3>
+        {scoreboard && scoreboard.map((team, idx) => {
+          // 判斷是否為目前半局
+          const isCurrentHalf = (team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom');
+          // 判斷是否為目前守備局
+          const isDefenseHalf = (team.team_name === game.away && halfInning === 'bottom') || (team.team_name === game.home && halfInning === 'top');
+          // 目前局數
+          const inningKey = `score_${inning}`;
+          return (
+            <div key={team.team_name} className="flex items-center gap-4 mb-2">
+              <span className="font-bold w-16">{team.team_name}</span>
+              <span>第 {inning}{halfInning === 'top' ? '上' : '下'} 分數：</span>
+              {isCurrentHalf ? (
+                <input
+                  type="number"
+                  className="border rounded px-2 py-1 w-16"
+                  value={team[inningKey] ?? ''}
+                  onChange={async (e) => {
+                    const val = e.target.value === '' ? null : Number(e.target.value);
+                    // 呼叫 API 更新分數
+                    await fetch(`/api/scoreboard/${gameId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ team_name: team.team_name, inning, score: val })
+                    });
+                    // 重新抓取分數
+                    const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+                    const reloadData = await reloadRes.json();
+                    setScoreboard(reloadData);
+                  }}
+                />
+              ) : (
+                <span className="w-16 inline-block text-center">{team[inningKey] ?? ''}</span>
+              )}
+              <span className="ml-4">失誤：</span>
+              {isDefenseHalf ? (
+                <input
+                  type="number"
+                  className="border rounded px-2 py-1 w-12"
+                  value={team.e ?? ''}
+                  onChange={async (e) => {
+                    const val = e.target.value === '' ? null : Number(e.target.value);
+                    // 呼叫 API 更新失誤
+                    await fetch(`/api/scoreboard/${gameId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ team_name: team.team_name, error: val })
+                    });
+                    // 重新抓取分數
+                    const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+                    const reloadData = await reloadRes.json();
+                    setScoreboard(reloadData);
+                  }}
+                />
+              ) : (
+                <span className="w-12 inline-block text-center">{team.e ?? ''}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
     </>
