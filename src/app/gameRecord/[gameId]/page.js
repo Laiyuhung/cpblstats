@@ -507,15 +507,63 @@ export default function GameRecord({ params }) {
                       }
                     }
                     return Math.max(max, inningCount)
-                  }, 0)))].map((_, i) => (
-                    <td key={i} className="border px-2 py-1 text-center">
-                      {team[`score_${i + 1}`] ?? ''}
-                    </td>
-                  ))}
-
+                  }, 0)))].map((_, i) => {
+                    const inningKey = `score_${i + 1}`;
+                    // 僅目前半局可編輯該局分數
+                    const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
+                    return (
+                      <td key={i} className="border px-2 py-1 text-center">
+                        {canEdit ? (
+                          <input
+                            type="number"
+                            className="border rounded px-1 py-0.5 w-12 text-center"
+                            value={team[inningKey] ?? ''}
+                            onChange={async (e) => {
+                              const val = e.target.value === '' ? null : Number(e.target.value);
+                              await fetch(`/api/scoreboard/${gameId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  team_type: team.team_type,
+                                  [inningKey]: val
+                                })
+                              });
+                              const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+                              const reloadData = await reloadRes.json();
+                              setScoreboard(reloadData);
+                            }}
+                          />
+                        ) : (
+                          team[inningKey] ?? ''
+                        )}
+                      </td>
+                    );
+                  })}
+                  {/* R/H/E 欄位 */}
                   <td className="border px-2 py-1 text-center">{team.r}</td>
                   <td className="border px-2 py-1 text-center">{team.h}</td>
-                  <td className="border px-2 py-1 text-center">{team.e}</td>
+                  <td className="border px-2 py-1 text-center">
+                    {/* 失誤全時段可編輯 */}
+                    <input
+                      type="number"
+                      className="border rounded px-1 py-0.5 w-10 text-center"
+                      value={team.e ?? ''}
+                      onChange={async (e) => {
+                        const val = e.target.value === '' ? null : Number(e.target.value);
+                        await fetch(`/api/scoreboard/${gameId}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            team_type: team.team_type,
+                            e: val
+                          })
+                        });
+                        const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+                        const reloadData = await reloadRes.json();
+                        setScoreboard(reloadData);
+                      }}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
