@@ -108,6 +108,11 @@ export default function GameRecord({ params }) {
   useEffect(() => {
     if (isLoading || playByPlay.length === 0 || homeBatters.length === 0 || awayBatters.length === 0 || !homePitcher || !awayPitcher) return;
 
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
+    const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
+    const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
+
     const latest = playByPlay[playByPlay.length - 1];
     if (!latest) return;
 
@@ -149,8 +154,7 @@ export default function GameRecord({ params }) {
         setCurrentBatter(homeBatters[homeIndex]);
       }
     }
-  }, [isLoading]);
-
+  }, [isLoading, playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
 
 
 
