@@ -117,6 +117,70 @@ export default function GameRecord({ params }) {
     const latest = playByPlay[playByPlay.length - 1];
     if (!latest) return;
 
+    // 1. 先根據 log 的 base_condition/out_condition 設定初始狀態
+    const parseBaseCondition = (condition) => ({
+      first: condition.includes('一'),
+      second: condition.includes('二'),
+      third: condition.includes('三'),
+    });
+    let basesState = parseBaseCondition(latest.base_condition || '');
+    let outsState = latest.out_condition || 0;
+
+    // 2. 根據 result 推進壘包與出局數
+    const resultOutMap = {
+      K: 1, F: 1, FO: 1, G: 1, SF: 1,
+      DP: 2,
+      TP: 3,
+    };
+    const outAdded = resultOutMap[latest.result] || 0;
+    let outs = Math.min(outsState + outAdded, 3);
+
+    // 進階壘包推進（仿 handleRecordAtBat 的 predictBasesAfterPlay）
+    const predictBasesAfterPlay = (result, bases) => {
+      const { first, second, third } = bases;
+      const newBases = { first: false, second: false, third: false };
+      switch (result) {
+        case '1B':
+        case 'BB':
+        case 'IBB':
+        case 'HBP':
+        case 'E':
+          if (third) newBases.third = false;
+          if (second) newBases.third = true;
+          if (first) newBases.second = true;
+          newBases.first = true;
+          break;
+        case '2B':
+          if (third || second) {
+            newBases.third = false;
+            newBases.second = false;
+          }
+          if (first) {
+            newBases.third = true;
+          }
+          newBases.second = true;
+          break;
+        case '3B':
+          newBases.third = true;
+          break;
+        case 'HR':
+          // 全壘打，壘包清空
+          break;
+        default:
+          return bases;
+      }
+      return newBases;
+    };
+    basesState = predictBasesAfterPlay(latest.result, basesState);
+
+    // 3. 換局處理：如果出局數>=3，壘包清空、出局歸零
+    if (outs >= 3) {
+      outs = 0;
+      basesState = { first: false, second: false, third: false };
+    }
+
+    setOuts(outs);
+    setBases(basesState);
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
@@ -125,7 +189,6 @@ export default function GameRecord({ params }) {
     } else {
       setCurrentBatter(homeBatters[homeIndex]);
     }
-    // 不再 setOuts、setBases 於這裡，讓壘位與出局數只由 handleRecordAtBat 控制
   }, [isLoading, playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
 
 
