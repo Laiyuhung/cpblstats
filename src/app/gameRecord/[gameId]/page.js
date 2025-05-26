@@ -177,23 +177,34 @@ export default function GameRecord({ params }) {
     console.log('[推算後] result:', latest.result, 'basesAfter:', basesAfter);
     basesState = basesAfter;
 
-    // 3. 換局處理：如果出局數>=3，壘包清空、出局歸零
+    // 3. 換局處理：如果出局數>=3，壘包清空、出局歸零，並切換局數與半局
+    let inningState = latest.inning;
+    let halfInningState = latest.half_inning;
+    let pitcherState = latest.half_inning === 'top' ? homePitcher : awayPitcher;
+    let batterState = latest.half_inning === 'top' ? awayBatters[awayIndex] : homeBatters[homeIndex];
     if (outs >= 3) {
       outs = 0;
       basesState = { first: false, second: false, third: false };
-      console.log('[換局] outs>=3，壘包清空');
+      // 切換半局與局數
+      if (latest.half_inning === 'top') {
+        halfInningState = 'bottom';
+        pitcherState = awayPitcher;
+        batterState = homeBatters[homeIndex];
+      } else {
+        halfInningState = 'top';
+        inningState = latest.inning + 1;
+        pitcherState = homePitcher;
+        batterState = awayBatters[awayIndex];
+      }
+      console.log('[換局] outs>=3，壘包清空，切換為', inningState, halfInningState);
     }
 
     setOuts(outs);
     setBases(basesState);
-    setInning(latest.inning);
-    setHalfInning(latest.half_inning);
-    setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
-    if (latest.half_inning === 'top') {
-      setCurrentBatter(awayBatters[awayIndex]);
-    } else {
-      setCurrentBatter(homeBatters[homeIndex]);
-    }
+    setInning(inningState);
+    setHalfInning(halfInningState);
+    setCurrentPitcher(pitcherState);
+    setCurrentBatter(batterState);
   }, [isLoading, playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
 
 
