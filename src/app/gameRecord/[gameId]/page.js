@@ -125,6 +125,7 @@ export default function GameRecord({ params }) {
     });
     let basesState = parseBaseCondition(latest.base_condition || '');
     let outsState = latest.out_condition || 0;
+    console.log('[推算前] base_condition:', latest.base_condition, 'basesState:', basesState, 'out_condition:', outsState);
 
     // 2. 根據 result 推進壘包與出局數
     const resultOutMap = {
@@ -134,6 +135,7 @@ export default function GameRecord({ params }) {
     };
     const outAdded = resultOutMap[latest.result] || 0;
     let outs = Math.min(outsState + outAdded, 3);
+    console.log('[推算中] result:', latest.result, 'outAdded:', outAdded, 'outs:', outs);
 
     // 進階壘包推進（仿 handleRecordAtBat 的 predictBasesAfterPlay）
     const predictBasesAfterPlay = (result, bases) => {
@@ -171,12 +173,15 @@ export default function GameRecord({ params }) {
       }
       return newBases;
     };
-    basesState = predictBasesAfterPlay(latest.result, basesState);
+    const basesAfter = predictBasesAfterPlay(latest.result, basesState);
+    console.log('[推算後] result:', latest.result, 'basesAfter:', basesAfter);
+    basesState = basesAfter;
 
     // 3. 換局處理：如果出局數>=3，壘包清空、出局歸零
     if (outs >= 3) {
       outs = 0;
       basesState = { first: false, second: false, third: false };
+      console.log('[換局] outs>=3，壘包清空');
     }
 
     setOuts(outs);
