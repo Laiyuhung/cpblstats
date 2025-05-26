@@ -139,7 +139,7 @@ export default function GameRecord({ params }) {
     } else {
       setCurrentBatter(nextBatter);
     }
-  }, [isLoading]);
+  }, [isLoading]); 
 
 
 
