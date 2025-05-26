@@ -95,14 +95,14 @@ export default function GameRecord({ params }) {
 
   useEffect(() => {
     // 🆕 載入時就計算兩隊逐打席紀錄數量來算棒次，並印出計算過程
+    // 🆕 棒次計算與換局修正：切換局時應該是原隊棒次+1，運行時也用 log 數量 % 9 + 1，並 console
+    // 棒次完全由 log 數量 % 打序長度決定，不再於換局時 +1
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
     const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
-    const awayIndex = (awayPlays.length % awayBatters.length);
-    const homeIndex = (homePlays.length % homeBatters.length);
-    console.log('[載入棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex + 1);
-    console.log('[載入棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex + 1);
-
-    // 同步黃色區塊的棒次 index 狀態
+    const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
+    const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
+    console.log('[棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex + 1);
+    console.log('[棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex + 1);
     setAwayCurrentBatterIndex(awayIndex);
     setHomeCurrentBatterIndex(homeIndex);
 
@@ -138,13 +138,8 @@ export default function GameRecord({ params }) {
       const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
       setHalfInning(nextHalf);
       setInning(nextInning);
-      if (nextHalf === 'top') {
-        setCurrentBatter(awayBatters[awayIndex]);
-        setCurrentPitcher(homePitcher);
-      } else {
-        setCurrentBatter(homeBatters[homeIndex]);
-        setCurrentPitcher(awayPitcher);
-      }
+      setCurrentBatter(nextHalf === 'top' ? awayBatters[awayIndex] : homeBatters[homeIndex]);
+      setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
