@@ -451,14 +451,13 @@ export default function GameRecord({ params }) {
   };
 
 
-  // 分數與失誤編輯權限：僅在目前半局可編輯分數，僅在守備局可編輯失誤
+  // 分數與失誤編輯權限：僅在目前半局可編輯分數，全時段可編輯失誤
   const canEditScore = (team) => {
     return (team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom');
   };
 
-  const canEditError = (team) => {
-    return (team.team_name === game.away && halfInning === 'bottom') || (team.team_name === game.home && halfInning === 'top');
-  };
+  // 失誤全時段可編輯
+  const canEditError = () => true;
 
   // 新增分數與失誤編輯元件
   const ScoreboardEditor = ({ team }) => {
@@ -490,7 +489,7 @@ export default function GameRecord({ params }) {
           <span className="w-16 inline-block text-center">{team[inningKey] ?? ''}</span>
         )}
         <span className="ml-4">失誤：</span>
-        {canEditError(team) ? (
+        {canEditError() ? (
           <input
             type="number"
             className="border rounded px-2 py-1 w-12"
@@ -783,11 +782,9 @@ export default function GameRecord({ params }) {
       {/* 分數與失誤編輯區塊 */}
       <div className="max-w-6xl mx-auto p-4 mb-4">
         <h3 className="font-bold mb-2">分數/失誤編輯</h3>
-        {scoreboard && scoreboard.map((team, idx) => {
+        {scoreboard && scoreboard.map((team) => {
           // 判斷是否為目前半局
-          const isCurrentHalf = (team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom');
-          // 判斷是否為目前守備局
-          const isDefenseHalf = (team.team_name === game.away && halfInning === 'bottom') || (team.team_name === game.home && halfInning === 'top');
+          const isCurrentHalf = canEditScore(team);
           // 目前局數
           const inningKey = `score_${inning}`;
           return (
@@ -817,7 +814,7 @@ export default function GameRecord({ params }) {
                 <span className="w-16 inline-block text-center">{team[inningKey] ?? ''}</span>
               )}
               <span className="ml-4">失誤：</span>
-              {isDefenseHalf ? (
+              {canEditError() ? (
                 <input
                   type="number"
                   className="border rounded px-2 py-1 w-12"
