@@ -94,13 +94,15 @@ export default function GameRecord({ params }) {
   }, [gameId])
 
   useEffect(() => {
-    if (
-      isLoading ||
-      playByPlay.length === 0 ||
-      homeBatters.length === 0 ||
-      awayBatters.length === 0 ||
-      !homePitcher || !awayPitcher
-    ) return;
+    // 🆕 載入時就計算兩隊逐打席紀錄數量來算棒次，並印出計算過程
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
+    const awayIndex = awayPlays.length % awayBatters.length;
+    const homeIndex = homePlays.length % homeBatters.length;
+    console.log('[載入棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex);
+    console.log('[載入棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex);
+
+    if (isLoading || playByPlay.length === 0 || homeBatters.length === 0 || awayBatters.length === 0 || !homePitcher || !awayPitcher) return;
 
     const latest = playByPlay[playByPlay.length - 1];
     if (!latest) return;
@@ -133,19 +135,19 @@ export default function GameRecord({ params }) {
       setHalfInning(nextHalf);
       setInning(nextInning);
       if (nextHalf === 'top') {
-        setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
+        setCurrentBatter(awayBatters[awayIndex]);
         setCurrentPitcher(homePitcher);
       } else {
-        setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
+        setCurrentBatter(homeBatters[homeIndex]);
         setCurrentPitcher(awayPitcher);
       }
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
       if (latest.half_inning === 'top') {
-        setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
+        setCurrentBatter(awayBatters[awayIndex]);
       } else {
-        setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
+        setCurrentBatter(homeBatters[homeIndex]);
       }
     }
   }, [isLoading]);
