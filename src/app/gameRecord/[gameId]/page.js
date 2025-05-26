@@ -127,38 +127,25 @@ export default function GameRecord({ params }) {
     setHalfInning(latest.half_inning);
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
 
-    const batters = latest.half_inning === 'top' ? awayBatters : homeBatters;
-    const currentIndex = batters.findIndex(b => b.name === latest.batter_name);
-    const nextIndex = (currentIndex + 1) % batters.length;
-    // const nextBatter = batters[nextIndex]; // 已不再使用，移除避免 eslint error
-
-    // 🆕 棒次計算改為：各隊逐打席紀錄數 % 9 + 1，並印出計算過程
-    const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
-    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
-    const awayIndex = awayPlays.length % awayBatters.length;
-    const homeIndex = homePlays.length % homeBatters.length;
-    console.log('[棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex);
-    console.log('[棒次計算] homePlays.length:', homePlays.length, 'homeBatters.length:', homeBatters.length, 'homeIndex:', homeIndex);
-
     if (totalOuts >= 3) {
       const nextHalf = latest.half_inning === 'top' ? 'bottom' : 'top';
       const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
       setHalfInning(nextHalf);
       setInning(nextInning);
       if (nextHalf === 'top') {
-        setCurrentBatter(awayBatters[awayIndex]);
+        setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
         setCurrentPitcher(homePitcher);
       } else {
-        setCurrentBatter(homeBatters[homeIndex]);
+        setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
         setCurrentPitcher(awayPitcher);
       }
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
       if (latest.half_inning === 'top') {
-        setCurrentBatter(awayBatters[awayIndex]);
+        setCurrentBatter(awayBatters[awayCurrentBatterIndex]);
       } else {
-        setCurrentBatter(homeBatters[homeIndex]);
+        setCurrentBatter(homeBatters[homeCurrentBatterIndex]);
       }
     }
   }, [isLoading]);
