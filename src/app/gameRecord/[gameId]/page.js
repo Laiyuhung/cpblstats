@@ -138,9 +138,16 @@ export default function GameRecord({ params }) {
       setHalfInning(nextHalf);
       setInning(nextInning);
 
-      const nextBatters = nextHalf === 'top' ? awayBatters : homeBatters;
-      setCurrentBatter(nextBatters[nextIndex]); // ✅ 接續打序
-      setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
+      if (nextHalf === 'top') {
+        const index = awayCurrentBatterIndex;
+        setCurrentBatter(awayBatters[index]);
+        setCurrentPitcher(homePitcher);
+      } else {
+        const index = homeCurrentBatterIndex;
+        setCurrentBatter(homeBatters[index]);
+        setCurrentPitcher(awayPitcher);
+      }
+
       setOuts(0);
       setBases({ first: false, second: false, third: false });
     } else {
@@ -459,6 +466,21 @@ export default function GameRecord({ params }) {
       )}
     </div>
 
+    <div className="max-w-6xl mx-auto p-4 mb-2 bg-yellow-100 border border-yellow-400 rounded text-sm text-gray-800">
+      <p className="mb-1 font-semibold">🧪 Debug：目前打序狀態</p>
+      <div className="flex justify-between gap-8">
+        <div>
+          <p className="font-bold">客隊 ({game?.away})：</p>
+          <p>目前打者棒次：{awayCurrentBatterIndex + 1} / {awayBatters.length}</p>
+          <p>打者姓名：{awayBatters[awayCurrentBatterIndex]?.name || '無'}</p>
+        </div>
+        <div>
+          <p className="font-bold">主隊 ({game?.home})：</p>
+          <p>目前打者棒次：{homeCurrentBatterIndex + 1} / {homeBatters.length}</p>
+          <p>打者姓名：{homeBatters[homeCurrentBatterIndex]?.name || '無'}</p>
+        </div>
+      </div>
+    </div>
 
 
     <div className="max-w-6xl mx-auto p-4 grid grid-cols-2 gap-4">
