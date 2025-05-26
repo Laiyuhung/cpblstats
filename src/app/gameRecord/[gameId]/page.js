@@ -93,7 +93,7 @@ export default function GameRecord({ params }) {
       })
   }, [gameId])
 
-  // 重新計算棒次，每次 playByPlay 更新都執行
+  // 重新計算棒次，每次 playByPlay 更新都執行（只同步棒次顯示，不動 bases/outs）
   useEffect(() => {
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
     const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
@@ -105,6 +105,7 @@ export default function GameRecord({ params }) {
     setHomeCurrentBatterIndex(homeIndex);
   }, [playByPlay, homeBatters, awayBatters]);
 
+  // 僅在紀錄打席時自動推進壘位與出局數
   useEffect(() => {
     if (isLoading || playByPlay.length === 0 || homeBatters.length === 0 || awayBatters.length === 0 || !homePitcher || !awayPitcher) return;
 
@@ -116,44 +117,15 @@ export default function GameRecord({ params }) {
     const latest = playByPlay[playByPlay.length - 1];
     if (!latest) return;
 
-    // 🆕 加入根據 result 推算出局數的邏輯
-    const resultOutMap = {
-      K: 1, F: 1, FO: 1, G: 1, SF: 1,
-      DP: 2,
-      TP: 3,
-    };
-    const baseOuts = latest.out_condition || 0;
-    const resultOuts = resultOutMap[latest.result] || 0;
-    const totalOuts = baseOuts + resultOuts;
-    setOuts(Math.min(totalOuts, 3));
-
-    const parseBaseCondition = (condition) => ({
-      first: condition.includes('一'),
-      second: condition.includes('二'),
-      third: condition.includes('三'),
-    });
-    setBases(parseBaseCondition(latest.base_condition || ''));
-
     setInning(latest.inning);
     setHalfInning(latest.half_inning);
     setCurrentPitcher(latest.half_inning === 'top' ? homePitcher : awayPitcher);
-
-    if (totalOuts >= 3) {
-      const nextHalf = latest.half_inning === 'top' ? 'bottom' : 'top';
-      const nextInning = latest.half_inning === 'bottom' ? latest.inning + 1 : latest.inning;
-      setHalfInning(nextHalf);
-      setInning(nextInning);
-      setCurrentBatter(nextHalf === 'top' ? awayBatters[awayIndex] : homeBatters[homeIndex]);
-      setCurrentPitcher(nextHalf === 'top' ? homePitcher : awayPitcher);
-      setOuts(0);
-      setBases({ first: false, second: false, third: false });
+    if (latest.half_inning === 'top') {
+      setCurrentBatter(awayBatters[awayIndex]);
     } else {
-      if (latest.half_inning === 'top') {
-        setCurrentBatter(awayBatters[awayIndex]);
-      } else {
-        setCurrentBatter(homeBatters[homeIndex]);
-      }
+      setCurrentBatter(homeBatters[homeIndex]);
     }
+    // 不再 setOuts、setBases 於這裡，讓壘位與出局數只由 handleRecordAtBat 控制
   }, [isLoading, playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher]);
 
 
