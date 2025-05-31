@@ -504,6 +504,24 @@ export default function GameRecord({ params }) {
     ).length;
   };
 
+  // 在 playByPlay 或 scoreboard 變動時即時同步 R/H/E 到 API
+  useEffect(() => {
+    if (!scoreboard) return;
+    scoreboard.forEach(team => {
+      const newH = getTotalHits(team);
+      const newR = getTotalScore(team);
+      const newE = team.e ?? 0;
+      // UI先動
+      setScoreboard(prev => prev && prev.map(t => t.team_name === team.team_name ? { ...t, h: newH, r: newR, e: newE } : t));
+      // 傳API
+      fetch(`/api/scoreboard/${gameId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_type: team.team_type, h: newH, r: newR, e: newE })
+      });
+    });
+  }, [playByPlay, scoreboard]);
+
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
   }
