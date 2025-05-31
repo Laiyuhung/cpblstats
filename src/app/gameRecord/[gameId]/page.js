@@ -501,10 +501,10 @@ export default function GameRecord({ params }) {
                   }, 0)))].map((_, i) => {
                     const inningKey = `score_${i + 1}`;
                     const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
-                    // 判斷該局是否已結束（或目前半局已換到另一隊）
-                    const isInningOver = (i + 1 < inning) || (i + 1 === inning && ((halfInning === 'bottom' && team.team_name === game.home) || (halfInning === 'top' && team.team_name === game.away)));
-                    // 若該局已結束或目前半局已換隊，且分數為空，顯示0
-                    const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isInningOver ? 0 : (team[inningKey] ?? '');
+                    // 判斷該半局是否已結束
+                    const isHalfInningOver = (i + 1 < inning) || (i + 1 === inning && ((halfInning === 'bottom' && team.team_name === game.away) || (halfInning === 'top' && team.team_name === game.home)));
+                    // 若該半局已結束且分數為空，顯示0
+                    const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isHalfInningOver ? 0 : (team[inningKey] ?? '');
                     return (
                       <td key={i} className="border px-2 py-1 text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -513,17 +513,22 @@ export default function GameRecord({ params }) {
                               className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
                               onClick={async () => {
                                 const val = (team[inningKey] ?? 0) - 1;
-                                await fetch(`/api/scoreboard/${gameId}`, {
+                                // 先更新前端UI
+                                setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, [inningKey]: val < 0 ? 0 : val } : t));
+                                // 再傳到後端
+                                fetch(`/api/scoreboard/${gameId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
                                     team_type: team.team_type,
                                     [inningKey]: val < 0 ? 0 : val
                                   })
+                                }).then(async () => {
+                                  // 可選：重新抓取資料
+                                  // const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
+                                  // const reloadData = await reloadRes.json();
+                                  // setScoreboard(reloadData);
                                 });
-                                const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                                const reloadData = await reloadRes.json();
-                                setScoreboard(reloadData);
                               }}
                               aria-label="減少分數"
                             >-</button>
@@ -534,7 +539,8 @@ export default function GameRecord({ params }) {
                               className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
                               onClick={async () => {
                                 const val = (team[inningKey] ?? 0) + 1;
-                                await fetch(`/api/scoreboard/${gameId}`, {
+                                setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, [inningKey]: val } : t));
+                                fetch(`/api/scoreboard/${gameId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
@@ -542,9 +548,6 @@ export default function GameRecord({ params }) {
                                     [inningKey]: val
                                   })
                                 });
-                                const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                                const reloadData = await reloadRes.json();
-                                setScoreboard(reloadData);
                               }}
                               aria-label="增加分數"
                             >+</button>
