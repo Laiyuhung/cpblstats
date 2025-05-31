@@ -492,10 +492,15 @@ export default function GameRecord({ params }) {
   };
   const getTotalHits = (team) => {
     if (!playByPlay || !game) return 0;
+    // 客隊（away）只算 half_inning === 'top'，主隊（home）只算 half_inning === 'bottom'
     const isAway = team.team_type === 'away';
     const teamName = team.team_name;
     return playByPlay.filter(
-      p => (isAway ? game.away : game.home) === teamName && ['IH','1B','2B','3B','HR'].includes(p.result)
+      p => p.half_inning === (isAway ? 'top' : 'bottom') && p.result && [
+        'IH', '1B', '2B', '3B', 'HR'
+      ].includes(p.result) && p.batter_name && (
+        (isAway ? game.away : game.home) === teamName
+      )
     ).length;
   };
 
