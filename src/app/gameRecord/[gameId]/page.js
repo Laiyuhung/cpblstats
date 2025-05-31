@@ -506,11 +506,10 @@ export default function GameRecord({ params }) {
                     return Math.max(max, inningCount)
                   }, 0)))].map((_, i) => {
                     const inningKey = `score_${i + 1}`;
-                    // 僅目前半局可編輯該局分數
                     const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
-                    // 判斷該局是否已結束
+                    // 判斷該局是否已結束（或目前半局已換到另一隊）
                     const isInningOver = (i + 1 < inning) || (i + 1 === inning && ((halfInning === 'bottom' && team.team_name === game.home) || (halfInning === 'top' && team.team_name === game.away)));
-                    // 若該局已結束且分數為空，顯示0
+                    // 若該局已結束或目前半局已換隊，且分數為空，顯示0
                     const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isInningOver ? 0 : (team[inningKey] ?? '');
                     return (
                       <td key={i} className="border px-2 py-1 text-center">
@@ -810,102 +809,6 @@ export default function GameRecord({ params }) {
           </ul>
 
         </ul>
-      </div>
-
-      {/* 分數與失誤編輯區塊 */}
-      <div className="max-w-6xl mx-auto p-4 mb-4">
-        <h3 className="font-bold mb-2">分數/失誤編輯</h3>
-        {scoreboard && scoreboard.map((team) => {
-          // 判斷是否為目前半局
-          const isCurrentHalf = canEditScore(team);
-          // 目前局數
-          const inningKey = `score_${inning}`;
-          return (
-            <div key={team.team_name} className="flex items-center gap-4 mb-2">
-              <span className="font-bold w-16">{team.team_name}</span>
-              <span>第 {inning}{halfInning === 'top' ? '上' : '下'} 分數：</span>
-              {isCurrentHalf ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                    onClick={async () => {
-                      const val = (team[inningKey] ?? 0) - 1;
-                      // 呼叫 API 更新分數
-                      await fetch(`/api/scoreboard/${gameId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ team_name: team.team_name, inning, score: val < 0 ? 0 : val })
-                      });
-                      // 重新抓取分數
-                      const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                      const reloadData = await reloadRes.json();
-                      setScoreboard(reloadData);
-                    }}
-                    aria-label="減少分數"
-                  >-</button>
-                  <span className="w-16 text-center">{team[inningKey] ?? ''}</span>
-                  <button
-                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                    onClick={async () => {
-                      const val = (team[inningKey] ?? 0) + 1;
-                      // 呼叫 API 更新分數
-                      await fetch(`/api/scoreboard/${gameId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ team_name: team.team_name, inning, score: val })
-                      });
-                      // 重新抓取分數
-                      const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                      const reloadData = await reloadRes.json();
-                      setScoreboard(reloadData);
-                    }}
-                    aria-label="增加分數"
-                  >+</button>
-                </div>
-              ) : (
-                <span className="w-16 inline-block text-center">{team[inningKey] ?? ''}</span>
-              )}
-              <span className="ml-4">失誤：</span>
-              <div className="flex items-center gap-1">
-                <button
-                  className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={async () => {
-                    const val = (team.e ?? 0) - 1;
-                    // 呼叫 API 更新失誤
-                    await fetch(`/api/scoreboard/${gameId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ team_name: team.team_name, error: val < 0 ? 0 : val })
-                    });
-                    // 重新抓取分數
-                    const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                    const reloadData = await reloadRes.json();
-                    setScoreboard(reloadData);
-                  }}
-                  aria-label="減少失誤"
-                >-</button>
-                <span className="w-12 inline-block text-center">{team.e ?? ''}</span>
-                <button
-                  className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={async () => {
-                    const val = (team.e ?? 0) + 1;
-                    // 呼叫 API 更新失誤
-                    await fetch(`/api/scoreboard/${gameId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ team_name: team.team_name, error: val })
-                    });
-                    // 重新抓取分數
-                    const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                    const reloadData = await reloadRes.json();
-                    setScoreboard(reloadData);
-                  }}
-                  aria-label="增加失誤"
-                >+</button>
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
     </>
