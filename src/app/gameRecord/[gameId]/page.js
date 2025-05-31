@@ -481,6 +481,24 @@ export default function GameRecord({ params }) {
   };
 
 
+  // 計算總分與安打
+  const getTotalScore = (team) => {
+    let total = 0;
+    for (let i = 1; i <= 12; i++) {
+      const v = team[`score_${i}`];
+      if (typeof v === 'number') total += v;
+    }
+    return total;
+  };
+  const getTotalHits = (team) => {
+    if (!playByPlay || !game) return 0;
+    const isAway = team.team_type === 'away';
+    const teamName = team.team_name;
+    return playByPlay.filter(
+      p => (isAway ? game.away : game.home) === teamName && ['IH','1B','2B','3B','HR'].includes(p.result)
+    ).length;
+  };
+
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
   }
@@ -531,16 +549,11 @@ export default function GameRecord({ params }) {
                   }, 0)))].map((_, i) => {
                     const inningKey = `score_${i + 1}`;
                     const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
-                    // 判斷該半局是否已結束
                     const isHalfInningOver = (
-                      // 該局已經過去
                       (i + 1 < inning) ||
-                      // 客隊（上半局）: 進入下半局才算結束
-                      (i + 1 === inning && team.team_name === game.away && halfInning === 'bottom') ||
-                      // 主隊（下半局）: 進入下一局才算結束
-                      (i + 1 < inning && team.team_name === game.home)
+                      (i + 1 === inning && team.team_type === 'away' && halfInning === 'bottom') ||
+                      (i + 1 < inning && team.team_type === 'home')
                     );
-                    // 若該半局已結束且分數為空，顯示0
                     const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isHalfInningOver ? 0 : (team[inningKey] ?? '');
                     return (
                       <td key={i} className="border px-2 py-1 text-center">
@@ -550,21 +563,14 @@ export default function GameRecord({ params }) {
                               className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
                               onClick={async () => {
                                 const val = (team[inningKey] ?? 0) - 1;
-                                // 先更新前端UI
                                 setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, [inningKey]: val < 0 ? 0 : val } : t));
-                                // 再傳到後端
+                                // 更新R
+                                const newR = getTotalScore({ ...team, [inningKey]: val < 0 ? 0 : val });
+                                setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, r: newR } : t));
                                 fetch(`/api/scoreboard/${gameId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    team_type: team.team_type,
-                                    [inningKey]: val < 0 ? 0 : val
-                                  })
-                                }).then(async () => {
-                                  // 可選：重新抓取資料
-                                  // const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                                  // const reloadData = await reloadRes.json();
-                                  // setScoreboard(reloadData);
+                                  body: JSON.stringify({ team_type: team.team_type, [inningKey]: val < 0 ? 0 : val, r: newR })
                                 });
                               }}
                               aria-label="減少分數"
@@ -577,13 +583,13 @@ export default function GameRecord({ params }) {
                               onClick={async () => {
                                 const val = (team[inningKey] ?? 0) + 1;
                                 setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, [inningKey]: val } : t));
+                                // 更新R
+                                const newR = getTotalScore({ ...team, [inningKey]: val });
+                                setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, r: newR } : t));
                                 fetch(`/api/scoreboard/${gameId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    team_type: team.team_type,
-                                    [inningKey]: val
-                                  })
+                                  body: JSON.stringify({ team_type: team.team_type, [inningKey]: val, r: newR })
                                 });
                               }}
                               aria-label="增加分數"
@@ -594,26 +600,25 @@ export default function GameRecord({ params }) {
                     );
                   })}
                   {/* R/H/E 欄位 */}
-                  <td className="border px-2 py-1 text-center">{team.r}</td>
-                  <td className="border px-2 py-1 text-center">{team.h}</td>
+                  <td className="border px-2 py-1 text-center">{getTotalScore(team)}</td>
+                  <td className="border px-2 py-1 text-center">{getTotalHits(team)}</td>
                   <td className="border px-2 py-1 text-center">
-                    {/* 失誤全時段可編輯，改用加減號 */}
+                    {/* 失誤全時段可編輯，改用加減號，UI先動 */}
                     <div className="flex items-center justify-center gap-1">
                       <button
                         className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
                         onClick={async () => {
                           const val = (team.e ?? 0) - 1;
-                          await fetch(`/api/scoreboard/${gameId}`, {
+                          setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, e: val < 0 ? 0 : val } : t));
+                          fetch(`/api/scoreboard/${gameId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               team_type: team.team_type,
-                              e: val < 0 ? 0 : val
+                              e: val < 0 ? 0 : val,
+                              h: getTotalHits({ ...team, e: val < 0 ? 0 : val })
                             })
                           });
-                          const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                          const reloadData = await reloadRes.json();
-                          setScoreboard(reloadData);
                         }}
                         aria-label="減少失誤"
                       >-</button>
@@ -622,17 +627,16 @@ export default function GameRecord({ params }) {
                         className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
                         onClick={async () => {
                           const val = (team.e ?? 0) + 1;
-                          await fetch(`/api/scoreboard/${gameId}`, {
+                          setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, e: val } : t));
+                          fetch(`/api/scoreboard/${gameId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               team_type: team.team_type,
-                              e: val
+                              e: val,
+                              h: getTotalHits({ ...team, e: val })
                             })
                           });
-                          const reloadRes = await fetch(`/api/scoreboard/${gameId}`);
-                          const reloadData = await reloadRes.json();
-                          setScoreboard(reloadData);
                         }}
                         aria-label="增加失誤"
                       >+</button>
