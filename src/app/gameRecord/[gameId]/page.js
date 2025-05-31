@@ -394,6 +394,36 @@ export default function GameRecord({ params }) {
         setHalfInning(nextHalf);
         setInning(nextInning);
 
+        // 自動補0寫入API
+        if (scoreboard) {
+          // 客隊（上半局）: 進入下半局時補0
+          if (halfInning === 'top') {
+            const away = scoreboard.find(t => t.team_type === 'away');
+            const inningKey = `score_${inning}`;
+            if (away && (away[inningKey] === null || away[inningKey] === undefined)) {
+              setScoreboard(prev => prev.map(t => t.team_type === 'away' ? { ...t, [inningKey]: 0 } : t));
+              fetch(`/api/scoreboard/${gameId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_type: 'away', [inningKey]: 0 })
+              });
+            }
+          }
+          // 主隊（下半局）: 進入下一局時補0
+          if (halfInning === 'bottom') {
+            const home = scoreboard.find(t => t.team_type === 'home');
+            const inningKey = `score_${inning}`;
+            if (home && (home[inningKey] === null || home[inningKey] === undefined)) {
+              setScoreboard(prev => prev.map(t => t.team_type === 'home' ? { ...t, [inningKey]: 0 } : t));
+              fetch(`/api/scoreboard/${gameId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_type: 'home', [inningKey]: 0 })
+              });
+            }
+          }
+        }
+
         if (nextHalf === 'top') {
           const nextIndex = (awayCurrentBatterIndex + 1) % awayBatters.length;
           setAwayCurrentBatterIndex(nextIndex);
