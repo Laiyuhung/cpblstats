@@ -502,7 +502,14 @@ export default function GameRecord({ params }) {
                     const inningKey = `score_${i + 1}`;
                     const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
                     // 判斷該半局是否已結束
-                    const isHalfInningOver = (i + 1 < inning) || (i + 1 === inning && ((halfInning === 'bottom' && team.team_name === game.away) || (halfInning === 'top' && team.team_name === game.home)));
+                    const isHalfInningOver = (
+                      // 該局已經過去
+                      (i + 1 < inning) ||
+                      // 客隊（上半局）: 進入下半局才算結束
+                      (i + 1 === inning && team.team_name === game.away && halfInning === 'bottom') ||
+                      // 主隊（下半局）: 進入下一局才算結束
+                      (i + 1 < inning && team.team_name === game.home)
+                    );
                     // 若該半局已結束且分數為空，顯示0
                     const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isHalfInningOver ? 0 : (team[inningKey] ?? '');
                     return (
