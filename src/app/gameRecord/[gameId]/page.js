@@ -508,6 +508,10 @@ export default function GameRecord({ params }) {
                     const inningKey = `score_${i + 1}`;
                     // 僅目前半局可編輯該局分數
                     const canEdit = (i + 1 === inning) && ((team.team_name === game.away && halfInning === 'top') || (team.team_name === game.home && halfInning === 'bottom'));
+                    // 判斷該局是否已結束
+                    const isInningOver = (i + 1 < inning) || (i + 1 === inning && ((halfInning === 'bottom' && team.team_name === game.home) || (halfInning === 'top' && team.team_name === game.away)));
+                    // 若該局已結束且分數為空，顯示0
+                    const displayScore = (team[inningKey] === null || team[inningKey] === undefined) && isInningOver ? 0 : (team[inningKey] ?? '');
                     return (
                       <td key={i} className="border px-2 py-1 text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -531,7 +535,7 @@ export default function GameRecord({ params }) {
                               aria-label="減少分數"
                             >-</button>
                           )}
-                          <span>{team[inningKey] ?? ''}</span>
+                          <span>{displayScore}</span>
                           {canEdit && (
                             <button
                               className="px-1 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
