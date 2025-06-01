@@ -504,6 +504,27 @@ export default function GameRecord({ params }) {
     ).length;
   };
 
+  // --- 新增：playByPlay 變動時自動同步 H 到 supabase ---
+  useEffect(() => {
+    if (!scoreboard || !Array.isArray(scoreboard) || !gameId) return;
+    // 只在 playByPlay 變動時同步 H
+    scoreboard.forEach(async (team) => {
+      const newH = getTotalHits(team);
+      if (team.h !== newH) {
+        // 更新 local scoreboard 狀態
+        setScoreboard(prev => prev.map(t => t.team_name === team.team_name ? { ...t, h: newH } : t));
+        // 更新 supabase
+        await fetch(`/api/scoreboard/${gameId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ team_type: team.team_type, h: newH })
+        });
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playByPlay]);
+
+
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
   }
@@ -620,8 +641,7 @@ export default function GameRecord({ params }) {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               team_type: team.team_type,
-                              e: val < 0 ? 0 : val,
-                              h: getTotalHits({ ...team, e: val < 0 ? 0 : val })
+                              e: val < 0 ? 0 : val
                             })
                           });
                         }}
@@ -638,8 +658,7 @@ export default function GameRecord({ params }) {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               team_type: team.team_type,
-                              e: val,
-                              h: getTotalHits({ ...team, e: val })
+                              e: val
                             })
                           });
                         }}
