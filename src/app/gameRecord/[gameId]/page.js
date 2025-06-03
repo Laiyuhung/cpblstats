@@ -632,7 +632,7 @@ export default function GameRecord({ params }) {
   }, [playByPlay]);
 
 
-  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次與投打（包含更換過的，守位同步非先發出場tab）
+  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次與投打（打者守位直接依據非先發出場tab顯示，優先代守/守備異動）
   useEffect(() => {
     // 取得目前半局所有有 at_bat 且有 batter_name/pitcher_name 的 play
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.batter_name && p.pitcher_name);
@@ -640,26 +640,26 @@ export default function GameRecord({ params }) {
     // 取得目前半局所有換投紀錄
     const awayPitchers = [homePitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'top').map(p => p.pitcher_name)];
     const homePitchers = [awayPitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'bottom').map(p => p.pitcher_name)];
-    // 取得目前半局所有打者（包含代打，守位同步代守/守備異動）
-    const getCurrentBatters = (batters, plays, fielders) => {
+    // 取得目前所有打者（依據非先發出場tab，優先代守/守備異動，否則代打，否則先發）
+    const getCurrentBattersWithPosition = (batters, plays, fielders) => {
       return batters.map(b => {
-        // 先找最後一個代打
-        const sub = plays.filter(p => p.at_bat === b.order).at(-1);
-        // 再找最後一個代守/守備異動
+        // 先找最後一個代守/守備異動
         const fielder = fielders.filter(p => p.at_bat === b.order).at(-1);
+        // 再找最後一個代打
+        const sub = plays.filter(p => p.at_bat === b.order).at(-1);
         return {
           ...b,
           name: sub ? sub.batter_name : b.name,
-          position: fielder ? fielder.position : b.position
+          position: fielder ? fielder.position : (sub ? 'PH' : b.position)
         };
       });
     };
-    const awayBattersWithSubs = getCurrentBatters(
+    const awayBattersWithSubs = getCurrentBattersWithPosition(
       awayBatters,
       playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'top'),
       playByPlay.filter(p => p.result === 'substitute_fielder' && p.half_inning === 'top')
     );
-    const homeBattersWithSubs = getCurrentBatters(
+    const homeBattersWithSubs = getCurrentBattersWithPosition(
       homeBatters,
       playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'bottom'),
       playByPlay.filter(p => p.result === 'substitute_fielder' && p.half_inning === 'bottom')
