@@ -632,22 +632,35 @@ export default function GameRecord({ params }) {
   }, [playByPlay]);
 
 
-  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次
+  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次與投打（包含更換過的）
   useEffect(() => {
-    // 只計算 batter_name 與 pitcher_name 都有值的 play
+    // 取得目前半局所有有 at_bat 且有 batter_name/pitcher_name 的 play
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.batter_name && p.pitcher_name);
     const homePlays = playByPlay.filter(p => p.half_inning === 'bottom' && p.batter_name && p.pitcher_name);
-    const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
-    const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
-    setAwayCurrentBatterIndex(awayIndex);
-    setHomeCurrentBatterIndex(homeIndex);
-    // 讓左側目前狀況與 Debug 狀態同步
+    // 取得目前半局所有換投紀錄
+    const awayPitchers = [homePitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'top').map(p => p.pitcher_name)];
+    const homePitchers = [awayPitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'bottom').map(p => p.pitcher_name)];
+    // 取得目前半局所有打者（包含代打）
+    const getCurrentBatters = (batters, plays) => {
+      // 依照棒次順序，若有代打則取最後一個該棒次的 batter_name
+      return batters.map(b => {
+        const sub = plays.filter(p => p.at_bat === b.order).at(-1);
+        return sub ? { ...b, name: sub.batter_name } : b;
+      });
+    };
+    const awayBattersWithSubs = getCurrentBatters(awayBatters, playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'top'));
+    const homeBattersWithSubs = getCurrentBatters(homeBatters, playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'bottom'));
+    setAwayCurrentBatterIndex(awayPlays.length % awayBattersWithSubs.length);
+    setHomeCurrentBatterIndex(homePlays.length % homeBattersWithSubs.length);
+    // 讓左側目前狀況與 Debug 狀態同步（包含更換過的投打）
     if (halfInning === 'top') {
-      setCurrentBatter(awayBatters[awayIndex] || null);
+      setCurrentBatter(awayBattersWithSubs[awayPlays.length % awayBattersWithSubs.length] || null);
+      setCurrentPitcher(awayPitchers.at(-1) || homePitcher);
     } else {
-      setCurrentBatter(homeBatters[homeIndex] || null);
+      setCurrentBatter(homeBattersWithSubs[homePlays.length % homeBattersWithSubs.length] || null);
+      setCurrentPitcher(homePitchers.at(-1) || awayPitcher);
     }
-  }, [playByPlay, homeBatters, awayBatters, halfInning]);
+  }, [playByPlay, homeBatters, awayBatters, homePitcher, awayPitcher, halfInning]);
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
