@@ -5,23 +5,24 @@ export async function POST(req) {
   try {
     const atBatData = await req.json()
 
-    if (!atBatData.game_no || !atBatData.batter_name || !atBatData.result) {
+    // 只檢查最基本欄位
+    if (!atBatData.game_no || !atBatData.result || !atBatData.inning || !atBatData.half_inning) {
       return NextResponse.json({ error: '參數不完整' }, { status: 400 })
     }
 
-    // 確保必要欄位存在
+    // 允許 batter_name、at_bat、pitcher_name 等為 null
     const gameResult = {
       game_no: atBatData.game_no,
-      batter_name: atBatData.batter_name,
+      batter_name: atBatData.batter_name || null,
       inning: atBatData.inning,
       half_inning: atBatData.half_inning,
       result: atBatData.result,
-      at_bat: atBatData.at_bat,
-      rbis: atBatData.rbis || 0,
-      sequence: atBatData.sequence || 1,
-      pitcher_name: atBatData.pitcher_name,
-      base_condition: atBatData.base_condition || '無人',
-      out_condition: atBatData.out_condition || 0
+      at_bat: atBatData.at_bat ?? null,
+      rbis: atBatData.rbis ?? 0,
+      sequence: atBatData.sequence ?? 1,
+      pitcher_name: atBatData.pitcher_name || null,
+      base_condition: atBatData.base_condition || null,
+      out_condition: atBatData.out_condition ?? null
     }
 
     const { error } = await supabase
