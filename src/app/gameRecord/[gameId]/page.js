@@ -490,7 +490,7 @@ export default function GameRecord({ params }) {
       if (halfInning === 'top') setHomePitcher(newPitcher);
       else setAwayPitcher(newPitcher);
       setCurrentPitcher(newPitcher);
-    } catch (e) {
+    } catch {
       alert('記錄換投時發生錯誤');
     }
   };
@@ -526,7 +526,7 @@ export default function GameRecord({ params }) {
       } else {
         setHomeBatters(prev => prev.map(b => b.order === Number(subBatterOrder) ? { ...b, name: newBatter } : b));
       }
-    } catch (e) {
+    } catch {
       alert('記錄代打時發生錯誤');
     }
   };
@@ -552,7 +552,7 @@ export default function GameRecord({ params }) {
       });
       if (!res.ok) throw new Error('記錄壘間出局失敗');
       setPlayByPlay(prev => [...prev, eventData]);
-    } catch (e) {
+    } catch {
       alert('記錄壘間出局時發生錯誤');
     }
     setOuts(newOuts);
