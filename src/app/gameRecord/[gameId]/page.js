@@ -809,6 +809,10 @@ export default function GameRecord({ params }) {
           className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'lineup' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
           onClick={() => setActiveTab('lineup')}
         >先發名單</button>
+        <button
+          className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'substitution' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
+          onClick={() => setActiveTab('substitution')}
+        >異動紀錄</button>
       </div>
 
       {activeTab === 'record' && (
@@ -1119,6 +1123,29 @@ export default function GameRecord({ params }) {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {/* 新增異動紀錄tab */}
+      {activeTab === 'substitution' && (
+        <div className="max-w-3xl mx-auto p-4">
+          <h3 className="text-lg font-bold mb-4">異動紀錄（代打/代守/換投）</h3>
+          <ul className="space-y-2">
+            {playByPlay.filter(p => ['substitute_batter','substitute_fielder','pitching_change'].includes(p.result)).map((p, i) => (
+              <li key={i} className="border rounded p-2 flex flex-col md:flex-row md:items-center gap-2">
+                <span className="font-bold text-blue-700">{p.result === 'substitute_batter' ? '代打' : p.result === 'substitute_fielder' ? '代守' : '換投'}</span>
+                {p.result === 'substitute_batter' && (
+                  <span>第{p.at_bat}棒 代打：{p.batter_name}</span>
+                )}
+                {p.result === 'substitute_fielder' && (
+                  <span>第{p.at_bat}棒 代守：{p.batter_name}（守位：{p.position || '-'}）</span>
+                )}
+                {p.result === 'pitching_change' && (
+                  <span>換投：{p.pitcher_name}</span>
+                )}
+                <span className="text-gray-500 text-xs ml-auto">{p.inning}{p.half_inning === 'top' ? '上' : '下'}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
