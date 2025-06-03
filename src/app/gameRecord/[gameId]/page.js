@@ -633,9 +633,9 @@ export default function GameRecord({ params }) {
 
   // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次
   useEffect(() => {
-    // 只計算 at_bat 有值的 play
-    const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.at_bat != null);
-    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom' && p.at_bat != null);
+    // 只計算 batter_name 與 pitcher_name 都有值的 play
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.batter_name && p.pitcher_name);
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom' && p.batter_name && p.pitcher_name);
     const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
     const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
     setAwayCurrentBatterIndex(awayIndex);
