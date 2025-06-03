@@ -23,12 +23,7 @@ export default function GameRecord({ params }) {
   const [scoreboard, setScoreboard] = useState(null)
   const [homeCurrentBatterIndex, setHomeCurrentBatterIndex] = useState(0);
   const [awayCurrentBatterIndex, setAwayCurrentBatterIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState('record'); // 'record' or 'lineup' or 'changes'
-  const [showPitcherModal, setShowPitcherModal] = useState(false);
-  const [showBatterModal, setShowBatterModal] = useState(false);
-  const [newPitcher, setNewPitcher] = useState('');
-  const [newBatter, setNewBatter] = useState('');
-  const [subBatterOrder, setSubBatterOrder] = useState('');
+  const [activeTab, setActiveTab] = useState('record'); // 'record' or 'lineup'
 
 
   const resultOptions = [
@@ -463,104 +458,16 @@ export default function GameRecord({ params }) {
     }
   }
 
-  // 新增：記錄換投
-  const handlePitchingChange = async () => {
-    if (!newPitcher) return;
-    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1;
-    const eventData = {
-      game_no: Number(gameId),
-      inning,
-      half_inning: halfInning,
-      result: 'pitching_change',
-      pitcher_name: newPitcher,
-      sequence: newSequence,
-      base_condition: getBaseCondition(),
-      out_condition: outs,
-    };
-    try {
-      const res = await fetch('/api/record-at-bat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
-      });
-      if (!res.ok) throw new Error('記錄換投失敗');
-      setPlayByPlay(prev => [...prev, eventData]);
-      setShowPitcherModal(false);
-      setNewPitcher('');
-      // 自動切換投手
-      if (halfInning === 'top') setHomePitcher(newPitcher);
-      else setAwayPitcher(newPitcher);
-      setCurrentPitcher(newPitcher);
-    } catch (e) {
-      alert('記錄換投時發生錯誤');
-    }
-  };
-
-  // 新增：記錄代打
-  const handleSubstituteBatter = async () => {
-    if (!newBatter || !subBatterOrder) return;
-    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1;
-    const eventData = {
-      game_no: Number(gameId),
-      inning,
-      half_inning: halfInning,
-      result: 'substitute_batter',
-      batter_name: newBatter,
-      at_bat: Number(subBatterOrder),
-      sequence: newSequence,
-      base_condition: getBaseCondition(),
-      out_condition: outs,
-    };
-    try {
-      const res = await fetch('/api/record-at-bat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
-      });
-      if (!res.ok) throw new Error('記錄代打失敗');
-      setPlayByPlay(prev => [...prev, eventData]);
-      setShowBatterModal(false);
-      setNewBatter('');
-      setSubBatterOrder('');
-      // 自動更新打序
-      if (halfInning === 'top') {
-        setAwayBatters(prev => prev.map(b => b.order === Number(subBatterOrder) ? { ...b, name: newBatter } : b));
-      } else {
-        setHomeBatters(prev => prev.map(b => b.order === Number(subBatterOrder) ? { ...b, name: newBatter } : b));
-      }
-    } catch (e) {
-      alert('記錄代打時發生錯誤');
-    }
-  };
-
-  // 新增：記錄壘間出局
-  const handleRunnerOut = async () => {
+  const handleRunnerOut = () => {
     const newOuts = outs + 1;
-    const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1;
-    const eventData = {
-      game_no: Number(gameId),
-      inning,
-      half_inning: halfInning,
-      result: 'runner_out',
-      sequence: newSequence,
-      base_condition: getBaseCondition(),
-      out_condition: outs,
-    };
-    try {
-      const res = await fetch('/api/record-at-bat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
-      });
-      if (!res.ok) throw new Error('記錄壘間出局失敗');
-      setPlayByPlay(prev => [...prev, eventData]);
-    } catch (e) {
-      alert('記錄壘間出局時發生錯誤');
-    }
+
     setOuts(newOuts);
+
     if (newOuts >= 3) {
+      // 換局：清空壘包與出局數
       setOuts(0);
       setBases({ first: false, second: false, third: false });
+
       if (halfInning === 'top') {
         setHalfInning('bottom');
         setCurrentBatter(homeBatters[0]);
@@ -780,10 +687,6 @@ export default function GameRecord({ params }) {
           className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'lineup' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
           onClick={() => setActiveTab('lineup')}
         >先發名單</button>
-        <button
-          className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'changes' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
-          onClick={() => setActiveTab('changes')}
-        >出場異動</button>
       </div>
 
       {activeTab === 'record' && (
@@ -904,66 +807,6 @@ export default function GameRecord({ params }) {
                   送出
                 </button>
               </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h2 className="text-xl font-bold mb-4">換投 / 代打</h2>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => setShowPitcherModal(true)}
-                  >換投</button>
-                  <button
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => setShowBatterModal(true)}
-                  >代打</button>
-                </div>
-                {/* 換投 Modal */}
-                {showPitcherModal && (
-                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded shadow-lg w-80">
-                      <h3 className="font-bold mb-2">換投</h3>
-                      <input
-                        className="border rounded p-2 w-full mb-2"
-                        placeholder="新投手姓名"
-                        value={newPitcher}
-                        onChange={e => setNewPitcher(e.target.value)}
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handlePitchingChange}>送出</button>
-                        <button className="bg-gray-400 text-white px-4 py-2 rounded" onClick={() => setShowPitcherModal(false)}>取消</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/* 代打 Modal */}
-                {showBatterModal && (
-                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded shadow-lg w-80">
-                      <h3 className="font-bold mb-2">代打</h3>
-                      <input
-                        className="border rounded p-2 w-full mb-2"
-                        placeholder="新打者姓名"
-                        value={newBatter}
-                        onChange={e => setNewBatter(e.target.value)}
-                      />
-                      <select
-                        className="border rounded p-2 w-full mb-2"
-                        value={subBatterOrder}
-                        onChange={e => setSubBatterOrder(e.target.value)}
-                      >
-                        <option value="">選擇棒次</option>
-                        {(halfInning === 'top' ? awayBatters : homeBatters).map(b => (
-                          <option key={b.order} value={b.order}>第{b.order}棒 {b.name}</option>
-                        ))}
-                      </select>
-                      <div className="flex gap-2 mt-2">
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSubstituteBatter}>送出</button>
-                        <button className="bg-gray-400 text-white px-4 py-2 rounded" onClick={() => setShowBatterModal(false)}>取消</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
             {/* 右側：單場 log 區域 */}
             <div>
@@ -981,8 +824,9 @@ export default function GameRecord({ params }) {
                           const base = play.base_condition || '';
                           const out = play.out_condition || 0;
                           const result = play.result;
+
                           const getResultColor = (type) => {
-                            if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O', 'DP', 'TP', 'runner_out'].includes(type)) {
+                            if (['K', 'SF', 'FO', 'F', 'G', 'FC', 'E', 'INT-O', 'DP', 'TP'].includes(type)) {
                               return 'bg-[#1E3A8A]'; // 深藍 - 出局類
                             }
                             if (['IH', '1B', '2B', '3B', 'HR'].includes(type)) {
@@ -991,23 +835,15 @@ export default function GameRecord({ params }) {
                             if (['BB', 'IBB', 'HBP', 'SAC', 'INT-D'].includes(type)) {
                               return 'bg-[#CA8A04]'; // 土黃 - 保送類
                             }
-                            if (['pitching_change', 'substitute_batter'].includes(type)) {
-                              return 'bg-[#059669]'; // 綠色 - 異動類
-                            }
                             return 'bg-gray-600'; // 其他
                           };
 
-                          // 顯示內容
-                          let resultText = result;
-                          if (result === 'pitching_change') resultText = `換投：${play.pitcher_name}`;
-                          if (result === 'substitute_batter') resultText = `第${play.at_bat}棒 代打：${play.batter_name}`;
-                          if (result === 'runner_out') resultText = '壘間出局';
                           return (
                             <li key={index} className="flex justify-between items-center gap-4">
                               {/* 左：打者與投手資訊 */}
                               <div className="w-1/3">
-                                <p className="text-lg font-bold text-left">{play.batter_name || ''}</p>
-                                <p className="text-sm text-gray-600 text-left">{play.pitcher_name ? `投手：${play.pitcher_name}` : ''}</p>
+                                <p className="text-lg font-bold text-left">{play.batter_name}</p>
+                                <p className="text-sm text-gray-600 text-left">投手：{play.pitcher_name}</p>
                               </div>
 
                               {/* 中：壘包與出局數 */}
@@ -1027,10 +863,10 @@ export default function GameRecord({ params }) {
                                 </div>
                               </div>
 
-                              {/* 右：打擊結果或異動 */}
+                              {/* 右：打擊結果 */}
                               <div className="w-1/3 flex flex-col items-end">
                                 <div className={`${getResultColor(result)} px-3 py-1 rounded text-white text-sm font-bold`}>
-                                  {resultText}
+                                  {result}
                                 </div>
                                 {play.rbis > 0 && (
                                   <div className="mt-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
