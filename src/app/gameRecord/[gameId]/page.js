@@ -632,7 +632,7 @@ export default function GameRecord({ params }) {
   }, [playByPlay]);
 
 
-  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次與投打（包含更換過的）
+  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次與投打（包含更換過的，守位同步非先發出場tab）
   useEffect(() => {
     // 取得目前半局所有有 at_bat 且有 batter_name/pitcher_name 的 play
     const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.batter_name && p.pitcher_name);
@@ -640,19 +640,33 @@ export default function GameRecord({ params }) {
     // 取得目前半局所有換投紀錄
     const awayPitchers = [homePitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'top').map(p => p.pitcher_name)];
     const homePitchers = [awayPitcher, ...playByPlay.filter(p => p.result === 'pitching_change' && p.half_inning === 'bottom').map(p => p.pitcher_name)];
-    // 取得目前半局所有打者（包含代打）
-    const getCurrentBatters = (batters, plays) => {
-      // 依照棒次順序，若有代打則取最後一個該棒次的 batter_name
+    // 取得目前半局所有打者（包含代打，守位同步代守/守備異動）
+    const getCurrentBatters = (batters, plays, fielders) => {
       return batters.map(b => {
+        // 先找最後一個代打
         const sub = plays.filter(p => p.at_bat === b.order).at(-1);
-        return sub ? { ...b, name: sub.batter_name } : b;
+        // 再找最後一個代守/守備異動
+        const fielder = fielders.filter(p => p.at_bat === b.order).at(-1);
+        return {
+          ...b,
+          name: sub ? sub.batter_name : b.name,
+          position: fielder ? fielder.position : b.position
+        };
       });
     };
-    const awayBattersWithSubs = getCurrentBatters(awayBatters, playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'top'));
-    const homeBattersWithSubs = getCurrentBatters(homeBatters, playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'bottom'));
+    const awayBattersWithSubs = getCurrentBatters(
+      awayBatters,
+      playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'top'),
+      playByPlay.filter(p => p.result === 'substitute_fielder' && p.half_inning === 'top')
+    );
+    const homeBattersWithSubs = getCurrentBatters(
+      homeBatters,
+      playByPlay.filter(p => p.result === 'substitute_batter' && p.half_inning === 'bottom'),
+      playByPlay.filter(p => p.result === 'substitute_fielder' && p.half_inning === 'bottom')
+    );
     setAwayCurrentBatterIndex(awayPlays.length % awayBattersWithSubs.length);
     setHomeCurrentBatterIndex(homePlays.length % homeBattersWithSubs.length);
-    // 讓左側目前狀況與 Debug 狀態同步（包含更換過的投打）
+    // 讓左側目前狀況與 Debug 狀態同步（包含更換過的投打與守位）
     if (halfInning === 'top') {
       setCurrentBatter(awayBattersWithSubs[awayPlays.length % awayBattersWithSubs.length] || null);
       setCurrentPitcher(awayPitchers.at(-1) || homePitcher);
@@ -1186,29 +1200,35 @@ export default function GameRecord({ params }) {
                   // 先抓該棒次所有代打（依照 playByPlay 時間順序）
                   const awaySubs = playByPlay.filter(p => p.result === 'substitute_batter' && p.at_bat === b.order && p.half_inning === 'top');
                   const homeSubs = playByPlay.filter(p => p.result === 'substitute_batter' && p.at_bat === b.order && p.half_inning === 'bottom');
+                  // 代守/守備異動
+                  const awayFielders = playByPlay.filter(p => p.result === 'substitute_fielder' && p.at_bat === b.order && p.half_inning === 'top');
+                  const homeFielders = playByPlay.filter(p => p.result === 'substitute_fielder' && p.at_bat === b.order && p.half_inning === 'bottom');
                   // 先發
+                  const lastFielder = [...awayFielders, ...homeFielders].at(-1);
                   const rows = [
                     <tr key={`starter-${i}`}>
                       <td className="border px-2 py-1 text-center align-top" rowSpan={1 + awaySubs.length + homeSubs.length}>{b.order}</td>
                       <td className="border px-2 py-1 text-left font-bold align-top">{b.name}</td>
-                      <td className="border px-2 py-1 text-center align-top">{b.position?.toUpperCase()}</td>
+                      <td className="border px-2 py-1 text-center align-top">{lastFielder ? lastFielder.position?.toUpperCase() : b.position?.toUpperCase()}</td>
                     </tr>
                   ];
                   // 客隊代打
                   awaySubs.forEach((sub, idx) => {
+                    const fielder = awayFielders.at(-1);
                     rows.push(
                       <tr key={`away-sub-${i}-${idx}`}> 
                         <td className="border px-2 py-1 text-left text-blue-700">[客] 代打：{sub.batter_name}</td>
-                        <td className="border px-2 py-1 text-center">PH</td>
+                        <td className="border px-2 py-1 text-center">{fielder ? fielder.position?.toUpperCase() : 'PH'}</td>
                       </tr>
                     );
                   });
                   // 主隊代打
                   homeSubs.forEach((sub, idx) => {
+                    const fielder = homeFielders.at(-1);
                     rows.push(
                       <tr key={`home-sub-${i}-${idx}`}> 
                         <td className="border px-2 py-1 text-left text-red-700">[主] 代打：{sub.batter_name}</td>
-                        <td className="border px-2 py-1 text-center">PH</td>
+                        <td className="border px-2 py-1 text-center">{fielder ? fielder.position?.toUpperCase() : 'PH'}</td>
                       </tr>
                     );
                   });
