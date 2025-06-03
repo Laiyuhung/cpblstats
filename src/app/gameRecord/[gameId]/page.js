@@ -631,6 +631,23 @@ export default function GameRecord({ params }) {
   }, [playByPlay]);
 
 
+  // 🧪 Debug：目前打序狀態與左側目前狀況同步棒次
+  useEffect(() => {
+    // 只計算 at_bat 有值的 play
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.at_bat != null);
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom' && p.at_bat != null);
+    const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
+    const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
+    setAwayCurrentBatterIndex(awayIndex);
+    setHomeCurrentBatterIndex(homeIndex);
+    // 讓左側目前狀況與 Debug 狀態同步
+    if (halfInning === 'top') {
+      setCurrentBatter(awayBatters[awayIndex] || null);
+    } else {
+      setCurrentBatter(homeBatters[homeIndex] || null);
+    }
+  }, [playByPlay, homeBatters, awayBatters, halfInning]);
+
   if (isLoading) {
     return <div className="max-w-2xl mx-auto p-4 text-center">載入比賽資料中...</div>
   }
