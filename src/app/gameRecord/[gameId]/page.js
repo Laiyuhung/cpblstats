@@ -101,8 +101,9 @@ export default function GameRecord({ params }) {
 
   // 重新計算棒次，每次 playByPlay 更新都執行（只同步棒次顯示，不動 bases/outs）
   useEffect(() => {
-    const awayPlays = playByPlay.filter(p => p.half_inning === 'top');
-    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom');
+    // 只計算有 at_bat 值的 play
+    const awayPlays = playByPlay.filter(p => p.half_inning === 'top' && p.at_bat != null);
+    const homePlays = playByPlay.filter(p => p.half_inning === 'bottom' && p.at_bat != null);
     const awayIndex = awayBatters.length > 0 ? (awayPlays.length % awayBatters.length) : 0;
     const homeIndex = homeBatters.length > 0 ? (homePlays.length % homeBatters.length) : 0;
     console.log('[棒次計算] awayPlays.length:', awayPlays.length, 'awayBatters.length:', awayBatters.length, 'awayIndex:', awayIndex + 1);
@@ -550,6 +551,7 @@ export default function GameRecord({ params }) {
       base_condition: getBaseCondition(),
       out_condition: outs,
     };
+    console.log('[壘間出局] eventData:', eventData);
     try {
       const res = await fetch('/api/record-at-bat', {
         method: 'POST',
@@ -562,19 +564,23 @@ export default function GameRecord({ params }) {
       alert('記錄壘間出局時發生錯誤');
     }
     setOuts(newOuts);
+    // 出局數達 3 自動換局
     if (newOuts >= 3) {
       setOuts(0);
       setBases({ first: false, second: false, third: false });
       if (halfInning === 'top') {
         setHalfInning('bottom');
-        setCurrentBatter(homeBatters[0]);
+        setCurrentBatter(homeBatters.find(b => b.order === 1) || homeBatters[0]);
         setCurrentPitcher(awayPitcher);
       } else {
         setHalfInning('top');
         setInning(prev => prev + 1);
-        setCurrentBatter(awayBatters[0]);
+        setCurrentBatter(awayBatters.find(b => b.order === 1) || awayBatters[0]);
         setCurrentPitcher(homePitcher);
       }
+    } else {
+      // 出局未滿三，左側出局數自動加
+      setOuts(newOuts);
     }
   };
 
