@@ -463,7 +463,7 @@ export default function GameRecord({ params }) {
     }
   }
 
-  // 記錄換投
+  // 換投
   const handlePitchingChange = async () => {
     if (!newPitcher) return;
     const newSequence = playByPlay.length > 0 ? Math.max(...playByPlay.map(play => play.sequence)) + 1 : 1;
@@ -477,6 +477,7 @@ export default function GameRecord({ params }) {
       base_condition: getBaseCondition(),
       out_condition: outs,
     };
+    console.log('[換投] eventData:', eventData); // 新增
     try {
       const res = await fetch('/api/record-at-bat', {
         method: 'POST',
@@ -510,6 +511,7 @@ export default function GameRecord({ params }) {
       base_condition: getBaseCondition(),
       out_condition: outs,
     };
+    console.log('[代打] eventData:', eventData); // 新增
     try {
       const res = await fetch('/api/record-at-bat', {
         method: 'POST',
@@ -530,6 +532,10 @@ export default function GameRecord({ params }) {
       alert('記錄代打時發生錯誤');
     }
   };
+
+  // 記錄代守（如有）
+  // 你可依照 handleSubstituteBatter 複製一份 handleSubstituteFielder，並加 console.log('[代守] eventData:', eventData);
+
 
   // 記錄壘間出局
   const handleRunnerOut = async () => {
