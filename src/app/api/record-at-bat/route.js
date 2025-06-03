@@ -10,18 +10,18 @@ export async function POST(req) {
       return NextResponse.json({ error: '參數不完整' }, { status: 400 })
     }
 
-    // 允許 batter_name、at_bat、pitcher_name 等為 null
+    // 允許 batter_name、at_bat、pitcher_name、rbis 等為 null，確保所有欄位都補 null 預設
     const gameResult = {
       game_no: atBatData.game_no,
-      batter_name: atBatData.batter_name || null,
+      batter_name: atBatData.batter_name ?? null,
       inning: atBatData.inning,
       half_inning: atBatData.half_inning,
       result: atBatData.result,
       at_bat: atBatData.at_bat ?? null,
       rbis: atBatData.rbis ?? 0,
       sequence: atBatData.sequence ?? 1,
-      pitcher_name: atBatData.pitcher_name || null,
-      base_condition: atBatData.base_condition || null,
+      pitcher_name: atBatData.pitcher_name ?? null,
+      base_condition: atBatData.base_condition ?? null,
       out_condition: atBatData.out_condition ?? null
     }
 
