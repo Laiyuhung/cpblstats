@@ -800,6 +800,7 @@ export default function GameRecord({ params }) {
 
     {/* Tabs */}
     <div className="max-w-6xl mx-auto p-4">
+      {/* tab 按鈕加一個：非先發出場 */}
       <div className="flex border-b mb-4">
         <button
           className={`px-4 py-2 font-bold border-b-2 ${activeTab === 'record' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
@@ -813,6 +814,10 @@ export default function GameRecord({ params }) {
           className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'substitution' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
           onClick={() => setActiveTab('substitution')}
         >異動紀錄</button>
+        <button
+          className={`ml-4 px-4 py-2 font-bold border-b-2 ${activeTab === 'nonstarter' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'}`}
+          onClick={() => setActiveTab('nonstarter')}
+        >非先發出場</button>
       </div>
 
       {activeTab === 'record' && (
@@ -1146,6 +1151,84 @@ export default function GameRecord({ params }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {/* 非先發出場tab */}
+      {activeTab === 'nonstarter' && (
+        <div className="max-w-4xl mx-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* 打者區 */}
+          <div>
+            <h3 className="text-lg font-bold mb-2">打者異動</h3>
+            <table className="table-auto w-full border border-gray-300 text-sm">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1">棒次</th>
+                  <th className="border px-2 py-1">先發/異動</th>
+                  <th className="border px-2 py-1">守位</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(awayBatters.length > 0 ? awayBatters : homeBatters).map((b, i) => {
+                  // 先抓該棒次所有代打（依照 playByPlay 時間順序）
+                  const awaySubs = playByPlay.filter(p => p.result === 'substitute_batter' && p.at_bat === b.order && p.half_inning === 'top');
+                  const homeSubs = playByPlay.filter(p => p.result === 'substitute_batter' && p.at_bat === b.order && p.half_inning === 'bottom');
+                  // 先發
+                  const rows = [
+                    <tr key={`starter-${i}`}>
+                      <td className="border px-2 py-1 text-center align-top" rowSpan={1 + awaySubs.length + homeSubs.length}>{b.order}</td>
+                      <td className="border px-2 py-1 text-left font-bold align-top">{b.name}</td>
+                      <td className="border px-2 py-1 text-center align-top">{b.position?.toUpperCase()}</td>
+                    </tr>
+                  ];
+                  // 客隊代打
+                  awaySubs.forEach((sub, idx) => {
+                    rows.push(
+                      <tr key={`away-sub-${i}-${idx}`}> 
+                        <td className="border px-2 py-1 text-left text-blue-700">[客] 代打：{sub.batter_name}</td>
+                        <td className="border px-2 py-1 text-center">-</td>
+                      </tr>
+                    );
+                  });
+                  // 主隊代打
+                  homeSubs.forEach((sub, idx) => {
+                    rows.push(
+                      <tr key={`home-sub-${i}-${idx}`}> 
+                        <td className="border px-2 py-1 text-left text-red-700">[主] 代打：{sub.batter_name}</td>
+                        <td className="border px-2 py-1 text-center">-</td>
+                      </tr>
+                    );
+                  });
+                  return rows;
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* 投手區 */}
+          <div>
+            <h3 className="text-lg font-bold mb-2">投手異動</h3>
+            <table className="table-auto w-full border border-gray-300 text-sm">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1">序</th>
+                  <th className="border px-2 py-1">投手/異動</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* 先發投手 */}
+                <tr>
+                  <td className="border px-2 py-1 text-center align-top">1</td>
+                  <td className="border px-2 py-1 text-left font-bold align-top">{awayPitcher || homePitcher}</td>
+                </tr>
+                {/* 換投紀錄依序往下 */}
+                {playByPlay.filter(p => p.result === 'pitching_change').map((p, idx) => (
+                  <tr key={`pitcher-change-${idx}`}> 
+                    <td className="border px-2 py-1 text-center align-top">{idx + 2}</td>
+                    <td className="border px-2 py-1 text-left text-blue-700">換投：{p.pitcher_name} <span className="text-xs text-gray-500">{p.inning}{p.half_inning === 'top' ? '上' : '下'}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
