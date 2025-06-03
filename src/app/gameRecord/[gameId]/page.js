@@ -29,6 +29,8 @@ export default function GameRecord({ params }) {
   const [newPitcher, setNewPitcher] = useState('');
   const [newBatter, setNewBatter] = useState('');
   const [subBatterOrder, setSubBatterOrder] = useState('');
+  const [showDefenseModal, setShowDefenseModal] = useState(false);
+  const [currentDefense, setCurrentDefense] = useState([]);
 
 
   const resultOptions = [
@@ -1185,7 +1187,7 @@ export default function GameRecord({ params }) {
                     rows.push(
                       <tr key={`away-sub-${i}-${idx}`}> 
                         <td className="border px-2 py-1 text-left text-blue-700">[客] 代打：{sub.batter_name}</td>
-                        <td className="border px-2 py-1 text-center">-</td>
+                        <td className="border px-2 py-1 text-center">PH</td>
                       </tr>
                     );
                   });
@@ -1194,7 +1196,7 @@ export default function GameRecord({ params }) {
                     rows.push(
                       <tr key={`home-sub-${i}-${idx}`}> 
                         <td className="border px-2 py-1 text-left text-red-700">[主] 代打：{sub.batter_name}</td>
-                        <td className="border px-2 py-1 text-center">-</td>
+                        <td className="border px-2 py-1 text-center">PH</td>
                       </tr>
                     );
                   });
@@ -1232,6 +1234,44 @@ export default function GameRecord({ params }) {
         </div>
       )}
     </div>
+
+    {/* 進入守備半局時彈窗詢問守位調整 */}
+    {showDefenseModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded shadow-lg w-[90vw] max-w-2xl">
+          <h3 className="font-bold mb-2">守備異動調整</h3>
+          <p className="mb-2 text-sm text-gray-700">請調整目前在場上球員的守位：</p>
+          <table className="table-auto w-full border border-gray-300 text-sm mb-4">
+            <thead>
+              <tr>
+                <th className="border px-2 py-1">棒次</th>
+                <th className="border px-2 py-1">球員</th>
+                <th className="border px-2 py-1">守位</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentDefense.map((p, idx) => (
+                <tr key={idx}>
+                  <td className="border px-2 py-1 text-center">{p.order}</td>
+                  <td className="border px-2 py-1 text-center">{p.name}</td>
+                  <td className="border px-2 py-1 text-center">
+                    <select value={p.position} onChange={e => handleDefenseChange(idx, e.target.value)} className="border rounded p-1">
+                      {['P','C','1B','2B','3B','SS','LF','CF','RF','DH','PH'].map(pos => (
+                        <option key={pos} value={pos}>{pos}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex gap-2 justify-end">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={saveDefenseChange}>儲存</button>
+            <button className="bg-gray-400 text-white px-4 py-2 rounded" onClick={() => setShowDefenseModal(false)}>取消</button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }
