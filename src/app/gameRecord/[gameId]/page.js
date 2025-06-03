@@ -139,6 +139,7 @@ export default function GameRecord({ params }) {
       K: 1, F: 1, FO: 1, G: 1, SF: 1,
       DP: 2,
       TP: 3,
+      runner_out: 1,
     };
     const outAdded = resultOutMap[latest.result] || 0;
     let outs = Math.min(outsState + outAdded, 3);
@@ -358,6 +359,7 @@ export default function GameRecord({ params }) {
       K: 1, F: 1, FO: 1, G: 1, SF: 1,
       DP: 2,
       TP: 3,
+      runner_out: 1,
     };
     const addedOuts = outAddedByResult[result] || 0;
     const computedOuts = Math.min(outs + addedOuts, 3);
