@@ -30,7 +30,6 @@ export default function GameRecord({ params }) {
   const [newBatter, setNewBatter] = useState('');
   const [subBatterOrder, setSubBatterOrder] = useState('');
   const [showDefenseModal, setShowDefenseModal] = useState(false);
-  const [currentDefense, setCurrentDefense] = useState([]);
 
 
   const resultOptions = [
